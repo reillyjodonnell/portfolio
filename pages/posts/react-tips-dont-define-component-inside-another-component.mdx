@@ -1,0 +1,176 @@
+---
+title: ⚛ React Tips - Don't define component inside of another component
+date: 2022/9/19
+description: tldr; Defining a component inside of another component creates a costly bug that causes unnecessary re-renders and can be solved by moving the child component outside of the parent component.
+tag: react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="https://images.unsplash.com/photo-1574155376612-bfa4ed8aabfd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
+  />
+</div>
+
+Take a look at this code below. It's a contrived example where we want the user to be able to enter some data into the email and password fields. But something isn't quite right. Can you spot the mistake?
+
+```javascript
+import React, { useState } from 'react';
+
+const Parent = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const Child = ({ value, onChange, type }) => {
+    return (
+      <input
+        value={value}
+        type={type}
+        placeholder="Email"
+        onChange={(e) => onChange(e.target?.value)}
+      />
+    );
+  };
+
+  return (
+    <form>
+      <label>
+        Email
+        <Child value={email} type={'email'} onChange={setEmail} />
+      </label>
+      <label>
+        Password
+        <Child value={password} type={'password'} onChange={setPassword} />
+      </label>
+    </form>
+  );
+};
+
+export default Parent;
+```
+
+Still not seeing what's wrong? Check out the example on this [React playground](https://codesandbox.io/s/hardcore-hamilton-ej18vo?file=/src/App.js) to demo it.
+
+...
+
+...
+
+...
+
+...
+
+I've create a component inside of another component and that's a **BIG** no-no in React & it's created some unexpected behavior (a bug) in this application.
+
+To understand WHY this bug exists let's take a step back and make sure we're on the same page about the fundamentals of React:
+
+## JSX & React.createElement
+
+Thanks to JSX, we're able to use some really familiar syntax to describe our UI, like in the example above. But behind the scenes we know that the JSX becomes React.createElement (which is why we always need to import React from 'react' in every file that uses JSX).
+
+Here's what the return value of React.createElement is for our Parent component from the example above:
+
+```javascript
+type: ƒ Parent() {}
+key: null
+ref: null
+props: Object
+_owner: null
+_store: Object
+```
+
+_Keep a close eye on the type property here - React will use this later_
+
+## Initial Render / Fiber
+
+On the initial render React begins at the entry point defined in the application (typically index.js) and recursively goes through each component and creates a component tree.
+
+The first time React encounters a component React keeps a record of all of the information that the component needs - i.e. props, state, & the **type** - in a data object called a _fiber_. This allows the important data like props and state to persist through every render.
+
+When the component instance no longer exists React will destroy the fiber instance.
+
+## The re-rendering process
+
+On every re-render React iterates over the fiber instances (which is each component instance) and returns a component tree - which describes the UI changes that will happen.
+
+A couple important notes:
+
+- A React component can re-render because of a change in state / update to context value/ change in props
+
+- When a React component re-renders it will cause ALL of the children components to re-render also.
+
+## Reconciliation
+
+On the first render React has to paint the entire UI described by the component tree to the DOM, there is no choice.
+
+On subsequent renders, React recursively travels through the component tree and checks if the same element is being rendered at that exact spot (through the Fiber object.) If the element at a given spot is the same (by checking the type of that element using strict equality ===) the element does not change. However, if an element's types are different React will destroy that component and all its children in component tree (which removes the fiber instances, unmounts the components, and destroys the DOM nodes) and create a new tree with new component instances and re-paint the DOM with the new calculate UI - this process is costly but essential for React.
+
+## Back to the example
+
+Now that we've covered what React is doing let's look through the code example from above one step at a time:
+
+Our entry point is defined in index.js. React renders the App component - meaning that it goes through the exported component defined in App.js. We are aliasing Parent as App but they are the exact same component.
+
+The JSX in the Parent component is converted into React.createElement calls. React creates fibers for each of the components: Parent and Child in this case.
+
+On the first render React goes through the parent component line by line. Since this is the first time this component is rendered React creates a fiber for that component and keeps track of important things like the state and type (the type is literally _type: ƒ Parent() {}_) On line 8 when it reaches the Child component React does the same for the Child component. It's type is ƒ Child() {}.
+
+Our parent component describes the UI, in this case a form with a label and then a Child component. Since a Child component is not valid HTML React goes to that Child component to see what it returns (this is done recursively until there's just HTML.)
+
+React paints that to the DOM.
+
+We type our email "d..." Wait it doesn't let us type anymore? The input lost focus?
+
+Since the state for the Parent component was updated React triggers a re-render for both that component and all of it's children. When the parent re-renders React once again travels through the component line by line. React compares the type of the component and sees that the type is the same - since that type is the same in the fiber object. Next on line 8 the Parent component says that it creates a new component called Child. React knows that previously a component called Child exists in this position of the component tree. It compares their types (the one from the newly created component and one from the fiber) which appear to be the same BUT can you catch the issue in the type comparison?
+
+```javascript
+ƒ Child() {} === ƒ Child() {}
+```
+
+No two functions, or non primitive values, will ever be the same since they're referencing different things.
+
+Since this is false, React will destroy the existing Fiber of the component and recursively destroy all DOM nodes.
+
+The new component instance is passed the new prop value from the parent and since the value of the input is set to the passed prop value it shows that value and the input has no focus.
+
+If you really want to see it for yourself add a useEffect inside like this:
+
+```javascript
+const Child = ({ value, onChange, type }) => {
+  useEffect(() => {
+    console.log('Component instance created');
+  }, []);
+
+  return (
+    <input
+      value={value}
+      type={type}
+      placeholder="Email"
+      onChange={(e) => onChange(e.target?.value)}
+    />
+  );
+};
+```
+
+That useEffect will be called every time you type in the input.
+
+## The Solution
+
+You can see how costly all of this is! So how do we fix this?
+
+The quickest change is by simply moving the Child component outside of the parent component (either above or below.) This prevents the creation and deletion of both Fiber objects and DOM nodes on every render.
+
+## End
+
+Thanks so much for reading this! I really hope that this taught you something new. If you want to reach out I'm on Twitter @reillyjodonnell
+
+Sources used for research & shaped my understanding of this process:
+
+https://reactjs.org/docs/reconciliation.html#elements-of-different-types
+https://blog.isquaredsoftware.com/2020/05/blogged-answers-a-mostly-complete-guide-to-react-rendering-behavior/
+https://www.youtube.com/watch?v=7YhdqIR2Yzo

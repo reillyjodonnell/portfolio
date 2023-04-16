@@ -1,0 +1,31 @@
+---
+title: ⚛ React Tips - You're misusing the React useEffect hook (probably)
+date: 2023/1/5
+description: tldr; only use to sync external systems to React
+tag: react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/react-code-smells.jpg"
+  />
+</div>
+
+This is def one of the most common mistakes I've seen in both personal and enterprise applications.
+
+The useEffect hook exists to sync an external system (i.e. network, DOM) to your React application. That means when you're useEffect'ing to:  
+1\. Adjust state or props when a certain value changes (in state or props)  
+2\. Replicate legacy class based lifecycle methods
+
+you're just doing it wrong.
+
+With awesome packages like TanStack Query (React Query) & SWR you don't even need a useEffect to fetch data.
+
+If you want to learn more about useEffect check out the new beta documentation on it: [https://beta.reactjs.org/learn/you-might-not-need-an-effect](https://beta.reactjs.org/learn/you-might-not-need-an-effect)

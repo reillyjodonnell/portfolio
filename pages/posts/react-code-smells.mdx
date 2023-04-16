@@ -1,0 +1,37 @@
+---
+title: 6 Code Smells In React I Look Out For
+date: 2023/1/5
+description: Be sure not to include these in your app.
+tag: react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/react-code-smells.jpg"
+  />
+</div>
+I've recently undergone analyzing and improving a React application's performance
+and have noticed some pretty serious code smells that affect both code quality and
+performance.
+
+Here are some code smells that I watch out for in a React application:
+
+1. A massive component (500+ LOC) - I hesitate to write a specific number of LOC because there are always exceptions but 500 begins to become TOO large. Components should be small and practice [Individual Responsibility](https://reactjs.org/docs/thinking-in-react.html#step-1-break-the-ui-into-a-component-hierarchy:~:text=But%20how%20do,into%20smaller%20subcomponents).
+2. Business logic and UI are intertwined - components should only contain the UI and not have complex business rules intertwined in the component. I suggest abstracting away business rules either into a helper function or into a custom hook.
+3. No tests for business logic - each set of business logic rules should be tested to document the expected outcome. Tests add **confidence** to the software that other programmers can use to be certain that they didn't break something pre-existing. It is extremely helpful to have tests when you need to refactor to get immediate feedback through the testing framework.
+4. Massive amounts of props are being passed - if there are a lot of props being passed through the component I check two things:
+
+   1. Can we compose this component better with composition (see smell 5)
+   2. If we're prop drilling certain props, like a user object or some international translation function that doesn't change that often, let's put it into Context.
+
+5. Lack of use of composition - If a codebase or a section of code isn't taking advantage of composition it points to a lack of understanding of React. Using composition results in fewer unnecessary rerenders and less prop drilling.  
+   Two fantastic resources if you're unfamiliar with composition: an article by Kent C. Dodds [https://epicreact.dev/one-react-mistake-thats-slowing-you-down/](https://epicreact.dev/one-react-mistake-thats-slowing-you-down/) and a video by Michael Jackson (no not that one) [https://www.youtube.com/watch?v=3XaXKiXtNjw&t=592s](https://www.youtube.com/watch?v=3XaXKiXtNjw&t=592s)
+6. Incorrect usage of hooks - the most commonly misused I've seen are useEffect - which should **not** be used to adjust state or props when a certain value changes, or replicate what componentDidMount/ other lifecycle methods did. Instead use it to sync an external system to React (network, DOM, etc.) These days with how awesome React-Query/SWR are you don't even need it.
+   Also, stop putting useCallbacks everywhere - [premature optimization is the root of all evil](https://www.explainxkcd.com/wiki/images/d/d5/optimization.png).

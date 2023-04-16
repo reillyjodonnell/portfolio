@@ -1,0 +1,65 @@
+---
+type: page
+title: Snippets
+date: 2021-03-18
+---
+
+# Snippets
+
+## Compare two arrays of objects based on a specified property w/ TS magic 🪄
+
+```typescript
+interface User {
+  id: number;
+  name: string;
+}
+
+const arr1: User = [
+  { id: 0, name: 'Ash' },
+  { id: 1, name: 'Brock' },
+];
+const arr2: User = [
+  { id: 0, name: 'Misty' },
+  { id: 1, name: 'Professor Oak' },
+];
+
+interface areNamesInArraysThesameParams {
+  arr1: User[];
+  arr2: User[];
+}
+
+// ❌ Don't do this! Abstract the property so it's extendable to all types of array of objects!
+function areArrayOfObjectsEqualByValue({
+  arr1,
+  arr2,
+}: areNamesInArraysTheSameParams) {
+  return arr1.every((arr1Item) => {
+    return arr2.some((arr2Item) => {
+      return arr1Item.name === arr2Item.name;
+    });
+  });
+}
+
+interface ArrayComparisonParams<T> {
+  arr1: T[];
+  arr2: T[];
+  property: keyof T;
+}
+
+// ✅ Instead pass a generic for TS magic! 🪄
+// By passing a generic we can call this function with any array of objects with a common property!
+function arrayObjectsEqualByProp<T>({
+  arr1,
+  arr2,
+  property,
+}: ArrayComparisonParams<T>) {
+  if (arr1.length === arr2.length) {
+    return arr1.every((arr1Item) => {
+      return arr2.some((arr2Item) => {
+        return arr1Item[property] === arr2Item[property];
+      });
+    });
+  }
+  return false;
+}
+```
