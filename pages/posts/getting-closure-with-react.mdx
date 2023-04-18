@@ -1,0 +1,87 @@
+---
+title: Getting Closure with React
+date: 2023/4/17
+description: How closures work & how it's used in React
+tag: react, typescript, javascript, react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="https://images.unsplash.com/photo-1594372365401-3b5ff14eaaed?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTd8fHNwbGFzaHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=900&q=60"
+  />
+</div>
+## What's a closure?
+
+Closures are like a backpack for functions. The backpack holds all of the values the function needs from its original environment, even if it's called in a different place. **It gives functions access to all of its belongings no matter where it's called**.
+
+Here's a simple code example:
+
+```typescript
+function createCounter() {
+  let count = 0;
+
+  return function () {
+    count++;
+    console.log(count);
+  };
+}
+
+const counter = createCounter();
+counter(); // Outputs: 1
+counter(); // Outputs: 2
+counter(); // Outputs: 3
+```
+
+The inner function has a closure (or backpack) that allows it to "remember" the value of count no matter where we call it!
+
+This is a super powerful tool that makes a lot of things possible!
+
+## Closures in React
+
+Here's the "React" version of the above code
+
+```typescript
+export function Counter() {
+  const [count, setCount] = useState(0);
+
+  function updateCount() {
+    setCount(count + 1);
+  }
+
+  return <button onClick={updateCount}>{count}</button>;
+}
+```
+
+The _closure_ is what allows `updateCount` to **remember** and access the value of `count` and the `setCount` function.
+
+## React Rendering - a snapshot of the component
+
+```typescript
+export function Counter() {
+  const [count, setCount] = useState(0);
+
+  function updateCount() {
+    setCount(count + 1);
+    console.log(count); // what do we get here?
+  }
+
+  return <button onClick={updateCount}>{count}</button>;
+}
+```
+
+Now what happens when we log the value of `count` after updating it?
+
+It may surprise you - but it's still whatever the value was before you updated it! (i.e. 0 after first clicked)
+
+The reason: React doesn't immediately update `count` so we are left with a _stale_ value - in this case, what the count originally was before the update.
+
+Instead, `count` (state) won't be updated until React **renders** the component again.
+
+This is because \[state behaves like a snapshot\]([https://react.dev/learn/state-as-a-snapshot](https://react.dev/learn/state-as-a-snapshot))
