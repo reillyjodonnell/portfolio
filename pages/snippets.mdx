@@ -6,7 +6,7 @@ date: 2021-03-18
 
 # Snippets
 
-## Compare two arrays of objects based on a specified property w/ TS magic 🪄
+## Compare two arrays of objects based on a specified property w/ TS magic (generics)🪄
 
 ```typescript
 interface User {
@@ -14,30 +14,33 @@ interface User {
   name: string;
 }
 
-const arr1: User = [
+const arr1: User[] = [
   { id: 0, name: 'Ash' },
   { id: 1, name: 'Brock' },
 ];
-const arr2: User = [
+const arr2: User[] = [
   { id: 0, name: 'Misty' },
   { id: 1, name: 'Professor Oak' },
 ];
 
-interface areNamesInArraysThesameParams {
+interface AreNamesInArraysThesameParams {
   arr1: User[];
   arr2: User[];
 }
 
 // ❌ Don't do this! Abstract the property so it's extendable to all types of array of objects!
-function areArrayOfObjectsEqualByValue({
+function areArrayObjectsEqualByName({
   arr1,
   arr2,
 }: areNamesInArraysTheSameParams) {
-  return arr1.every((arr1Item) => {
-    return arr2.some((arr2Item) => {
-      return arr1Item.name === arr2Item.name;
+  if (arr1.length === arr2.length) {
+    return arr1.every((arr1Item) => {
+      return arr2.some((arr2Item) => {
+        return arr1Item.name === arr2Item.name;
+      });
     });
-  });
+  }
+  return false;
 }
 
 interface ArrayComparisonParams<T> {
@@ -48,7 +51,7 @@ interface ArrayComparisonParams<T> {
 
 // ✅ Instead pass a generic for TS magic! 🪄
 // By passing a generic we can call this function with any array of objects with a common property!
-function arrayObjectsEqualByProp<T>({
+function areArrayObjectsEqualByValue<T>({
   arr1,
   arr2,
   property,
@@ -62,4 +65,25 @@ function arrayObjectsEqualByProp<T>({
   }
   return false;
 }
+
+const sameItems1: User[] = [
+  { id: 0, name: 'Ash' },
+  { id: 1, name: 'Brock' },
+];
+const sameItems2: User[] = [
+  { id: 1, name: 'Brock' },
+  { id: 0, name: 'Ash' },
+];
+
+console.log(
+  areArrayObjectsEqualByValue({
+    arr1: sameItems1,
+    arr2: sameItems2,
+    property: 'name',
+  })
+);
+// true
+
+console.log(areArrayObjectsEqualByValue({ arr1, arr2, property: 'name' }));
+// false
 ```
