@@ -1,0 +1,56 @@
+---
+title: How to use Tailwind (NativeWind) with Expo
+date: 2023/09/01
+description: Quick guide to using Tailwind NativeWind with Expo
+tag: react native, typescript, tailwind
+author: You
+---
+
+I ❤️ using Tailwind with React. It's a great way to build UIs quickly and consistently.
+
+To use it we are going to use [NativeWind](https://nativewind.dev)
+
+To install it, run:
+
+```bash
+yarn add nativewind
+yarn add --dev tailwindcss@3.3.2
+```
+
+Run:
+
+```bash
+npx tailwindcss init
+```
+
+This generates your `tailwind.config.js` file.
+
+Add this to your `babel.config.js` file:
+
+```js
+// tailwind.config.js
+
+module.exports = {
+- content: [],
++ content: ["./app/**/*.{js,jsx,ts,tsx}", "./<custom directory>/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+Add this babel plugin:
+
+```js
+// babel.config.js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [+'nativewind/babel'],
+  };
+};
+```
+
+Now reset your Expo server and you should be good to go!
