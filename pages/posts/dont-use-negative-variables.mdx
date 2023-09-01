@@ -1,0 +1,45 @@
+---
+title: Don't use negative variable & function names
+date: 2023/08/31
+description: Use positive variable and function names
+tag: react, programming
+author: You
+---
+
+Between the title & this: **_Use positive variable and function names_**
+
+which was easier to read?
+
+Here's another example:
+
+```typescript
+const isNotActive = user.status !== 'active';
+
+if (!isNotActive) {
+  // they're online
+}
+
+if (isNotActive) {
+  // they're offline
+}
+```
+
+Compared to this:
+
+```typescript
+const isActive = user.status === 'active';
+
+if (isActive) {
+  // they're online
+}
+
+if (!isActive) {
+  // they're offline
+}
+```
+
+Did you notice the cognitive effort you had to do when negating the negative statement?
+
+When we have a boolean variable - a teammate will likely need to check the opposite. Which means they'd have to negate the negative 🫠
+
+We want to be sympathetic towards each other and keep the cognitive load for reading code as low as possible. **Keep your variable/ function names positive!**
