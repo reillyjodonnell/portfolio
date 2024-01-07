@@ -1,0 +1,189 @@
+---
+title: Building UDP server from scratch in Zig
+date: 2024/1/7
+description: In this post we'll build a UDP server from scratch in Zig. We'll cover how to create a socket, bind it to a specific address and port, and listen for messages.
+tag: zig, networking
+author: You
+---
+
+At a high level this is how UDP servers work:
+
+1. Create a socket
+2. Bind the socket to a specific address and port (through the OS)
+3. Listen for messages at that specific address and port
+
+Here's how we do these steps in Zig:
+
+## Create a socket
+
+We need to tell the OS to create a socket via the \`std.os.socket\` function.
+
+Here's it's signature:
+
+```typescript
+fn socket(domain: u32, socket_type: u32, protocol: u32) SocketError!socket_t
+```
+
+`domain` refers to the IP address family: i.e. IPv4, or IPv6.
+
+`socket_type` is exactly what it sounds like. We'll use DGRAM (datagram) to signal we're making a UDP socket.
+
+`protocol` is for when we support multiple protocols for our server. For our simple one we only support 1 protocol: UDP. By passing a 0 we're telling the system to use the inferred protocol.
+
+We get a `socket_t` from this to represent a socket.
+
+```typescript
+const sock = try std.os.socket(std.os.AF.INET, std.os.SOCK.DGRAM, 0);
+```
+
+## bind the socket
+
+Next we need to tell the OS to bind the socket to a specific port and address so we can listen for messages.
+
+Here's the function signature for bind
+
+```typescript
+fn bind(sock: socket_t, addr: *const sockaddr, len: socklen_t) BindError!void
+// addr is *const T where T is one of the sockaddr
+```
+
+`sock` is the socket we created from earlier (remember the `socket_t` )
+
+`addr` is a pointer to a `sockaddr` struct
+
+`len` is the size of the `Address` struct. Use the `getOsSockLen` method from our `Address` instance.
+
+---
+
+Let's talk about how to get the `sockaddr` instance:
+
+First we need to give the socket an address via: `parseIP4` Here's the function signature:
+
+```typescript
+fn parseIp4(buf: []const u8, port: u16) !Address
+```
+
+the `buf` is the IP (idk why it's called a buf here)
+
+From this we get an `Address` instance.
+
+Address looks like this:
+
+```typescript
+pub const Address = extern union {
+    any: os.sockaddr,
+    in: Ip4Address,
+    in6: Ip6Address,
+...
+}
+```
+
+We can use the `.any` to access the socket address!
+
+It needs a pointer so be sure to pass the address (via `&` )
+
+---
+
+We have this so far:
+
+```typescript
+const std = @import("std");
+const os = std.os;
+
+pub fn main() !void {
+    const sock = try std.os.socket(std.os.AF.INET, std.os.SOCK.DGRAM, 0);
+    const parsed_address = try std.net.Address.parseIp4("127.0.0.1", 3000);
+    try os.bind(socket, address.any, address.getOsSockLen());
+
+}
+```
+
+## Listen for messages
+
+We'll use the `recvfrom` provided by the OS. This will get us the data from the socket without the address from the client.
+
+The signature looks like this:
+
+```typescript
+fn recvfrom(
+    sockfd: socket_t,
+    buf: []u8,
+    flags: u32,
+    src_addr: ?*sockaddr,
+    addrlen: ?*socklen_t,
+) RecvFromError!usize
+```
+
+It needs a few things:
+
+1. what socket we're wanting to listen to (`sockfd`)
+2. A buffer to put the bytes it gets from the stream
+
+The rest of the args from the signature aren't needed in this example.
+
+Be sure to stick recvfrom in a persisted loop to keep listening for data.
+
+## Code example
+
+```typescript
+const std = @import("std");
+const expect = std.testing.expect;
+const net = std.net;
+const os = std.os;
+
+test "create a socket" {
+    var socket = try Socket.init("127.0.0.1", 3000);
+    try expect(@TypeOf(socket.socket) == std.os.socket_t);
+}
+
+const Socket = struct {
+    address: std.net.Address,
+    socket: std.os.socket_t,
+
+    fn init(ip: []const u8, port: u16) !Socket {
+        const parsed_address = try std.net.Address.parseIp4(ip, port);
+        const sock = try std.os.socket(std.os.AF.INET, std.os.SOCK.DGRAM, 0);
+        errdefer os.closeSocket(sock);
+        return Socket{ .address = parsed_address, .socket = sock };
+    }
+
+    fn bind(self: *Socket) !void {
+        try os.bind(self.socket, &self.address.any, self.address.getOsSockLen());
+    }
+
+    fn listen(self: *Socket) !void {
+        var buffer: [1024]u8 = undefined;
+
+        while (true) {
+            const received_bytes = try std.os.recvfrom(self.socket, buffer[0..], 0, null, null);
+            std.debug.print("Received {d} bytes: {s}\n", .{ received_bytes, buffer[0..received_bytes] });
+        }
+    }
+};
+```
+
+## Interacting with the server
+
+We can run `nc -u 127.0.0.1 3000` to interact with the UDP server. Be sure to pass the -u flag to tell netcat that this is a UDP connection as it defaults to TCP.
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/creating-udp-server-from-scratch-in-zig/client.png"
+  />
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+       src="/images/creating-udp-server-from-scratch-in-zig/server.png"
+
+/>
+
+</div>
+Thanks for reading :)
