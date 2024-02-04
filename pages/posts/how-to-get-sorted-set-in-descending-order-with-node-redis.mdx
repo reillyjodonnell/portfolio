@@ -1,0 +1,79 @@
+---
+title: How to get sorted set in descending order with node redis
+date: 2024/2/4
+description: everything is zRange now
+tag: redis
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/Redis.png"
+  />
+</div>
+
+You've got a structure like this:
+
+```typescript
+redisClient.zAdd('leaderboard', {score: 0, value: "charlie"}
+redisClient.zAdd('leaderboard', {score: 1, value: "beth"}
+redisClient.zAdd('leaderboard', {score: 2, value: "adam"}
+```
+
+Sadly the below only retrieves the values in ASCENDING order
+
+```typescript
+redisClient.zRange('leaderboard', 0, 2);
+```
+
+This will give us:
+
+```yaml
+1) "charlie"
+2) "beth"
+3) "adam"
+```
+
+We have to pass the REV flag in the options
+
+```typescript
+redisClient.zRange('leaderboard', 0, 2, {
+      REV: true,
+    });
+  }
+```
+
+If you ctrl+space in the object you get so many options it's hard to find it.
+
+It took me a solid 10 min to find this. Hope this helps someone!
+
+## **Bonus**:
+
+**How to sort in desc order for top 10 results:**
+
+```typescript
+zRange('leaderboard', 0, 9, {
+      REV: true,
+    });
+  }
+```
+
+**how to do it with scores:**
+
+```typescript
+redisClient.zRangeWithScores('leaderboard', 0, 9, {
+  REV: true,
+});
+```
+
+**How to do it in CLI:**
+
+```yaml
+ZRANGEBYSCORE leaderboard 0 9 rev
+```
