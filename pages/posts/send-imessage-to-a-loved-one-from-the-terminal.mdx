@@ -1,0 +1,62 @@
+---
+title: Send iMessage to a loved one from the terminal!
+date: 2024/3/11
+description: Powered by bash and AppleScript!
+tag: bash
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="https://cdn.hashnode.com/res/hashnode/image/stock/unsplash/2PODhmrvLik/upload/25758896dfd9e985037ae7d872f001bb.jpeg?w=1600&h=840&fit=crop&crop=entropy&auto=compress,format&format=webp"
+  />
+</div>
+
+`mkdir ~/bin`
+
+Now let's go to it:
+
+`cd ~/bin` and create a file `text.sh`
+
+```bash
+#!/bin/bash
+
+MESSAGE=$1
+# Replace with their number (be sure to include the +1)
+PHONE_NUMBER=+11234567
+
+if [ "$#" -ne 1 ]; then
+     echo "Usage: $0 MESSAGE"
+     exit 1
+fi
+
+osascript -e "tell application \"Messages\" to send \"$MESSAGE\" to buddy \"    $PHONE_NUMBER\""
+
+```
+
+Now we need to make the file executable:  
+`chmod +x text.sh`
+
+Now we can use it!
+
+`./text.sh "I LOVE YOU"`
+
+### Alias
+
+To alias it so that you could say something like `rach "I LOVE YOU"`
+
+Add to your `.zshrc` or `.bashrc` the following:
+
+```bash
+# local bin
+export PATH="$HOME/bin:$PATH"
+alias rach='text.sh'
+```
+
+Now we can say `rach "I LOVE YOU"` and it sends!
