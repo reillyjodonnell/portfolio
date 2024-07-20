@@ -1,0 +1,795 @@
+---
+title: Inside React (Part 1) - how to get started.
+date: 2024/7/17
+description: How to get started with understanding how React works under the hood
+tag: react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{
+      width: '100%',
+      height: 'auto',
+      maxHeight: 500,
+      objectFit: 'cover',
+      borderRadius: 10,
+    }}
+    src="/images/inside-react-part-1/cover.jpg"
+    alt="A detailed close-up of various interlocking gears and mechanical parts, intricately arranged. The components are metallic, with a slightly worn, industrial look. The composition is dense and complex, highlighting the intricate nature of mechanical engineering."
+  />
+</div>
+
+## Introduction
+
+I literally know nothing about the internals of React. We're going to figure it out together! Hopefully this helps other people!
+
+To start with something that we literally have no idea we could go a couple routes:
+
+1. Check out the repo and see how it works (I tried and it was overwhelming)
+2. Run a react app with breakpoints and let it guide you through the code (like step 1 but better)
+
+_Side note: I'm going to try to quickly create a rough high level overview of the major parts so I'll be quick to pass over seemingly little things and will prob end up missing important details. It's okay though we can always come back! Let's do this!_
+
+## Set up w/ blank vite app
+
+Grab an empty SPA - I suggest vite via:
+
+```js annotate
+const blog = 'https://jser.dev';
+//                    ^
+//       [JSer.dev is the *homepage* for JSer.]
+//       [Check it out! [jser.dev](https://jser.dev)]
+// This is a normal comment
+```
+
+```bash
+bun create vite basic-react-app --template react-ts
+```
+
+Now let's set a breakpoint at the entry point in `main.tsx` - there are many ways to do this I suggest:
+
+```typescript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+debugger;
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+## Let's get started!
+
+Now we're ready to start debugging. Run the app, open up localhost:3000 (or whatever port) and open the dev tools and refresh and you should see the breakpoint:
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/inside-react-part-1/screenshot-1.png"
+  />
+</div>
+
+Above is the very first function that gets called: `ReactDOM.createRoot(document.getElementById('root')!)`
+
+It calls `m.createRoot` which calls `createRoot$1` which returns `createRoot(container, options)` so we'll start there!
+
+## `createRoot`
+
+```js annotate
+const blog = 'https://jser.dev';
+//                    ^
+//       [JSer.dev is the *homepage* for JSer.]
+//       [Check it out! [jser.dev](https://jser.dev)]
+// This is a normal comment
+```
+
+```js
+function createRoot(container, options) {
+  if (!isValidContainer(container)) {
+    throw new Error('createRoot(...): Target container is not a DOM element.');
+  }
+
+  warnIfReactDOMContainerInDEV(container);
+  var isStrictMode = false;
+  var concurrentUpdatesByDefaultOverride = false;
+  var identifierPrefix = '';
+  var onRecoverableError = defaultOnRecoverableError;
+  var transitionCallbacks = null;
+
+  if (options !== null && options !== undefined) {
+    {
+      if (options.hydrate) {
+        warn(
+          'hydrate through createRoot is deprecated. Use ReactDOMClient.hydrateRoot(container, <App />) instead.'
+        );
+      } else {
+        if (
+          typeof options === 'object' &&
+          options !== null &&
+          options.$$typeof === REACT_ELEMENT_TYPE
+        ) {
+          error(
+            'You passed a JSX element to createRoot. You probably meant to ' +
+              'call root.render instead. ' +
+              'Example usage:\n\n' +
+              '  let root = createRoot(domContainer);\n' +
+              '  root.render(<App />);'
+          );
+        }
+      }
+    }
+
+    if (options.unstable_strictMode === true) {
+      isStrictMode = true;
+    }
+
+    if (options.identifierPrefix !== undefined) {
+      identifierPrefix = options.identifierPrefix;
+    }
+
+    if (options.onRecoverableError !== undefined) {
+      onRecoverableError = options.onRecoverableError;
+    }
+
+    if (options.transitionCallbacks !== undefined) {
+      transitionCallbacks = options.transitionCallbacks;
+    }
+  }
+
+  var root = createContainer(
+    container,
+    ConcurrentRoot,
+    null,
+    isStrictMode,
+    concurrentUpdatesByDefaultOverride,
+    identifierPrefix,
+    onRecoverableError
+  );
+  markContainerAsRoot(root.current, container);
+  var rootContainerElement =
+    container.nodeType === COMMENT_NODE ? container.parentNode : container;
+  listenToAllSupportedEvents(rootContainerElement);
+  return new ReactDOMRoot(root);
+}
+```
+
+My eyes are glazing over at the details that I don't really get / care about rn.
+
+### `createContainer`
+
+```js
+function createContainer(
+  containerInfo,
+  tag,
+  hydrationCallbacks,
+  isStrictMode,
+  concurrentUpdatesByDefaultOverride,
+  identifierPrefix,
+  onRecoverableError,
+  transitionCallbacks
+) {
+  var hydrate = false;
+  var initialChildren = null;
+  return createFiberRoot(
+    containerInfo,
+    tag,
+    hydrate,
+    initialChildren,
+    hydrationCallbacks,
+    isStrictMode,
+    concurrentUpdatesByDefaultOverride,
+    identifierPrefix,
+    onRecoverableError
+  );
+}
+```
+
+### `createFiberRoot`
+
+```js
+function createFiberRoot(
+  containerInfo,
+  tag,
+  hydrate,
+  initialChildren,
+  hydrationCallbacks,
+  isStrictMode,
+  concurrentUpdatesByDefaultOverride, // TODO: We have several of these arguments that are conceptually part of the
+  // host config, but because they are passed in at runtime, we have to thread
+  // them through the root constructor. Perhaps we should put them all into a
+  // single type, like a DynamicHostConfig that is defined by the renderer.
+  identifierPrefix,
+  onRecoverableError,
+  transitionCallbacks
+) {
+  var root = new FiberRootNode(
+    containerInfo,
+    tag,
+    hydrate,
+    identifierPrefix,
+    onRecoverableError
+  );
+  // stateNode is any.
+
+  var uninitializedFiber = createHostRootFiber(tag, isStrictMode);
+  root.current = uninitializedFiber;
+  uninitializedFiber.stateNode = root;
+
+  {
+    var _initialState = {
+      element: initialChildren,
+      isDehydrated: hydrate,
+      cache: null,
+      // not enabled yet
+      transitions: null,
+      pendingSuspenseBoundaries: null,
+    };
+    uninitializedFiber.memoizedState = _initialState;
+  }
+
+  initializeUpdateQueue(uninitializedFiber);
+  return root;
+}
+```
+
+The first line is `var root = new FiberRootNode(containerInfo, tag, hydrate, identifierPrefix, onRecoverableError);` which calls
+
+```js
+function FiberRootNode(
+  containerInfo,
+  tag,
+  hydrate,
+  identifierPrefix,
+  onRecoverableError
+) {
+  this.tag = tag;
+  this.containerInfo = containerInfo;
+  this.pendingChildren = null;
+  this.current = null;
+  this.pingCache = null;
+  this.finishedWork = null;
+  this.timeoutHandle = noTimeout;
+  this.context = null;
+  this.pendingContext = null;
+  this.callbackNode = null;
+  this.callbackPriority = NoLane;
+  this.eventTimes = createLaneMap(NoLanes);
+  this.expirationTimes = createLaneMap(NoTimestamp);
+  this.pendingLanes = NoLanes;
+  this.suspendedLanes = NoLanes;
+  this.pingedLanes = NoLanes;
+  this.expiredLanes = NoLanes;
+  this.mutableReadLanes = NoLanes;
+  this.finishedLanes = NoLanes;
+  this.entangledLanes = NoLanes;
+  this.entanglements = createLaneMap(NoLanes);
+  this.identifierPrefix = identifierPrefix;
+  this.onRecoverableError = onRecoverableError;
+
+  {
+    this.mutableSourceEagerHydrationData = null;
+  }
+
+  {
+    this.effectDuration = 0;
+    this.passiveEffectDuration = 0;
+  }
+
+  {
+    this.memoizedUpdaters = new Set();
+    var pendingUpdatersLaneMap = (this.pendingUpdatersLaneMap = []);
+
+    for (var _i = 0; _i < TotalLanes; _i++) {
+      pendingUpdatersLaneMap.push(new Set());
+    }
+  }
+
+  {
+    switch (tag) {
+      case ConcurrentRoot:
+        this._debugRootType = hydrate ? 'hydrateRoot()' : 'createRoot()';
+        break;
+
+      case LegacyRoot:
+        this._debugRootType = hydrate ? 'hydrate()' : 'render()';
+        break;
+    }
+  }
+}
+```
+
+`createLaneMap` is this:
+
+```js
+function createLaneMap(initial) {
+  // Intentionally pushing one by one.
+  // https://v8.dev/blog/elements-kinds#avoid-creating-holes
+  var laneMap = [];
+
+  for (var i = 0; i < TotalLanes; i++) {
+    laneMap.push(initial);
+  }
+
+  return laneMap;
+}
+```
+
+After creating the root node it calls `createHostRootFiber` on the line `var uninitializedFiber = createHostRootFiber(tag, isStrictMode);`
+
+```js
+function createHostRootFiber(
+  tag,
+  isStrictMode,
+  concurrentUpdatesByDefaultOverride
+) {
+  var mode;
+
+  if (tag === ConcurrentRoot) {
+    mode = ConcurrentMode;
+
+    if (isStrictMode === true) {
+      mode |= StrictLegacyMode;
+
+      {
+        mode |= StrictEffectsMode;
+      }
+    }
+  } else {
+    mode = NoMode;
+  }
+
+  if (isDevToolsPresent) {
+    // Always collect profile timings when DevTools are present.
+    // This enables DevTools to start capturing timing at any point–
+    // Without some nodes in the tree having empty base times.
+    mode |= ProfileMode;
+  }
+
+  return createFiber(HostRoot, null, null, mode);
+}
+```
+
+createFiber looks like this:
+
+```js
+var createFiber = function (tag, pendingProps, key, mode) {
+  // $FlowFixMe: the shapes are exact here but Flow doesn't like constructors
+  return new FiberNode(tag, pendingProps, key, mode);
+};
+```
+
+```js
+function FiberNode(tag, pendingProps, key, mode) {
+  // Instance
+  this.tag = tag;
+  this.key = key;
+  this.elementType = null;
+  this.type = null;
+  this.stateNode = null; // Fiber
+
+  this.return = null;
+  this.child = null;
+  this.sibling = null;
+  this.index = 0;
+  this.ref = null;
+  this.pendingProps = pendingProps;
+  this.memoizedProps = null;
+  this.updateQueue = null;
+  this.memoizedState = null;
+  this.dependencies = null;
+  this.mode = mode; // Effects
+
+  this.flags = NoFlags;
+  this.subtreeFlags = NoFlags;
+  this.deletions = null;
+  this.lanes = NoLanes;
+  this.childLanes = NoLanes;
+  this.alternate = null;
+
+  {
+    // Note: The following is done to avoid a v8 performance cliff.
+    //
+    // Initializing the fields below to smis and later updating them with
+    // double values will cause Fibers to end up having separate shapes.
+    // This behavior/bug has something to do with Object.preventExtension().
+    // Fortunately this only impacts DEV builds.
+    // Unfortunately it makes React unusably slow for some applications.
+    // To work around this, initialize the fields below with doubles.
+    //
+    // Learn more about this here:
+    // https://github.com/facebook/react/issues/14365
+    // https://bugs.chromium.org/p/v8/issues/detail?id=8538
+    this.actualDuration = Number.NaN;
+    this.actualStartTime = Number.NaN;
+    this.selfBaseDuration = Number.NaN;
+    this.treeBaseDuration = Number.NaN; // It's okay to replace the initial doubles with smis after initialization.
+    // This won't trigger the performance cliff mentioned above,
+    // and it simplifies other profiler code (including DevTools).
+
+    this.actualDuration = 0;
+    this.actualStartTime = -1;
+    this.selfBaseDuration = 0;
+    this.treeBaseDuration = 0;
+  }
+
+  {
+    // This isn't directly used but is handy for debugging internals:
+    this._debugSource = null;
+    this._debugOwner = null;
+    this._debugNeedsRemount = false;
+    this._debugHookTypes = null;
+
+    if (!hasBadMapPolyfill && typeof Object.preventExtensions === 'function') {
+      Object.preventExtensions(this);
+    }
+  }
+}
+```
+
+Now we're back to `createFiberRoot` where it sets the root's (`root` came from `var root = new FiberRootNode(containerInfo, tag, hydrate, identifierPrefix, onRecoverableError)`) current property to the uninitialized fiber
+and we set the `stateNode` property on `unitializedFiber` to `root`. Notice how the relationship between the two
+
+```js
+...
+root.current = uninitializedFiber;
+uninitializedFiber.stateNode = root;
+
+{
+  var _initialState = {
+    element: initialChildren,
+    isDehydrated: hydrate,
+    cache: null,
+    // not enabled yet
+    transitions: null,
+    pendingSuspenseBoundaries: null,
+  };
+  uninitializedFiber.memoizedState = _initialState;
+}
+...
+```
+
+Then it calls `initializeUpdateQueue(uninitializedFiber);
+
+```js
+initializeUpdateQueue(uninitializedFiber);
+```
+
+```js
+function initializeUpdateQueue(fiber) {
+  var queue = {
+    baseState: fiber.memoizedState,
+    firstBaseUpdate: null,
+    lastBaseUpdate: null,
+    shared: {
+      pending: null,
+      interleaved: null,
+      lanes: NoLanes,
+    },
+    effects: null,
+  };
+  fiber.updateQueue = queue;
+}
+```
+
+Then finally `createFiberRoot` returns the created `root`;
+
+Then we return back to `createRoot` which calls `markContainerAsRoot(root.current, container);`
+
+```js
+function markContainerAsRoot(hostRoot, node) {
+  node[internalContainerInstanceKey] = hostRoot;
+}
+```
+
+From higher up in the `react-dom.development.js` is `var internalContainerInstanceKey = '__reactContainer$' + randomKey;`
+
+Then it calls `listenToAllSupportedEvents(rootContainerElement);` Doesn't seem super critical so we'll gloss over it.
+
+Now `createRoot` hits the last line:
+
+` return new ReactDOMRoot(root);`
+
+```js
+function ReactDOMRoot(internalRoot) {
+  this._internalRoot = internalRoot;
+}
+```
+
+And `createRoot$1` returns the above
+and `createRoot` returns the `root`:
+
+```js
+...
+exports.createRoot = function(c, o) {
+    i.usingClientEntryPoint = true;
+    try {
+      return m.createRoot(c, o);
+    } finally {
+      i.usingClientEntryPoint = false;
+    }
+  };
+  ...
+```
+
+Then it runs some jsx conversion on the `<React.StrictMode>` and `<App />` and then calls `render`:
+
+```js
+ReactDOMHydrationRoot.prototype.render = ReactDOMRoot.prototype.render =
+  function (children) {
+    /*
+    This _internalRoot came from:
+
+    function ReactDOMRoot(internalRoot) {
+      this._internalRoot = internalRoot;
+    }
+    */
+    var root = this._internalRoot;
+
+    if (root === null) {
+      throw new Error('Cannot update an unmounted root.');
+    }
+
+    {
+      if (typeof arguments[1] === 'function') {
+        error(
+          'render(...): does not support the second callback argument. ' +
+            'To execute a side effect after rendering, declare it in a component body with useEffect().'
+        );
+      } else if (isValidContainer(arguments[1])) {
+        error(
+          'You passed a container to the second argument of root.render(...). ' +
+            "You don't need to pass it again since you already passed it to create the root."
+        );
+      } else if (typeof arguments[1] !== 'undefined') {
+        error(
+          'You passed a second argument to root.render(...) but it only accepts ' +
+            'one argument.'
+        );
+      }
+
+      var container = root.containerInfo;
+
+      if (container.nodeType !== COMMENT_NODE) {
+        var hostInstance = findHostInstanceWithNoPortals(root.current);
+
+        if (hostInstance) {
+          if (hostInstance.parentNode !== container) {
+            error(
+              'render(...): It looks like the React-rendered content of the ' +
+                'root container was removed without using React. This is not ' +
+                'supported and will cause errors. Instead, call ' +
+                "root.unmount() to empty a root's container."
+            );
+          }
+        }
+      }
+    }
+
+    updateContainer(children, root, null, null);
+  };
+```
+
+I'm glossing over everything but the last line `updateContainer(children, root, null, null);` which calls `updateContainer` which is defined in `react-dom.development.js`
+
+```js
+function updateContainer(element, container, parentComponent, callback) {
+  {
+    onScheduleRoot(container, element);
+  }
+
+  var current$1 = container.current;
+  var eventTime = requestEventTime();
+  var lane = requestUpdateLane(current$1);
+
+  {
+    markRenderScheduled(lane);
+  }
+
+  var context = getContextForSubtree(parentComponent);
+
+  if (container.context === null) {
+    container.context = context;
+  } else {
+    container.pendingContext = context;
+  }
+
+  {
+    if (isRendering && current !== null && !didWarnAboutNestedUpdates) {
+      didWarnAboutNestedUpdates = true;
+
+      error(
+        'Render methods should be a pure function of props and state; ' +
+          'triggering nested component updates from render is not allowed. ' +
+          'If necessary, trigger nested updates in componentDidUpdate.\n\n' +
+          'Check the render method of %s.',
+        getComponentNameFromFiber(current) || 'Unknown'
+      );
+    }
+  }
+
+  var update = createUpdate(eventTime, lane); // Caution: React DevTools currently depends on this property
+  // being called "element".
+
+  update.payload = {
+    element: element,
+  };
+  callback = callback === undefined ? null : callback;
+
+  if (callback !== null) {
+    {
+      if (typeof callback !== 'function') {
+        error(
+          'render(...): Expected the last optional `callback` argument to be a ' +
+            'function. Instead received: %s.',
+          callback
+        );
+      }
+    }
+
+    update.callback = callback;
+  }
+
+  var root = enqueueUpdate(current$1, update, lane);
+
+  if (root !== null) {
+    scheduleUpdateOnFiber(root, current$1, lane, eventTime);
+    entangleTransitions(root, current$1, lane);
+  }
+
+  return lane;
+}
+```
+
+which calls:
+
+```js
+function onScheduleRoot(root, children) {
+  {
+    if (
+      injectedHook &&
+      typeof injectedHook.onScheduleFiberRoot === 'function'
+    ) {
+      try {
+        injectedHook.onScheduleFiberRoot(rendererID, root, children);
+      } catch (err) {
+        if (!hasLoggedError) {
+          hasLoggedError = true;
+
+          error('React instrumentation encountered an error: %s', err);
+        }
+      }
+    }
+  }
+}
+```
+
+```js
+hook.onScheduleFiberRoot = function (id, root, children) {
+  if (!isPerformingRefresh) {
+    // If it was intentionally scheduled, don't attempt to restore.
+    // This includes intentionally scheduled unmounts.
+    failedRoots.delete(root);
+
+    if (rootElements !== null) {
+      rootElements.set(root, children);
+    }
+  }
+
+  return oldOnScheduleFiberRoot.apply(this, arguments);
+};
+```
+
+````js
+
+         hook.onScheduleFiberRoot = function (id, root, children) {
+      if (!isPerformingRefresh) {
+        // If it was intentionally scheduled, don't attempt to restore.
+        // This includes intentionally scheduled unmounts.
+        failedRoots.delete(root);
+
+        if (rootElements !== null) {
+          rootElements.set(root, children);
+        }
+      }
+
+      return oldOnScheduleFiberRoot.apply(this, arguments);
+    };
+    ```
+````
+
+The renders are put into lanes and then called in order of priority.
+
+```js
+function requestUpdateLane(fiber) {
+  // Special cases
+  var mode = fiber.mode;
+
+  if ((mode & ConcurrentMode) === NoMode) {
+    return SyncLane;
+  } else if (
+    (executionContext & RenderContext) !== NoContext &&
+    workInProgressRootRenderLanes !== NoLanes
+  ) {
+    // This is a render phase update. These are not officially supported. The
+    // old behavior is to give this the same "thread" (lanes) as
+    // whatever is currently rendering. So if you call `setState` on a component
+    // that happens later in the same render, it will flush. Ideally, we want to
+    // remove the special case and treat them as if they came from an
+    // interleaved event. Regardless, this pattern is not officially supported.
+    // This behavior is only a fallback. The flag only exists until we can roll
+    // out the setState warning, since existing code might accidentally rely on
+    // the current behavior.
+    return pickArbitraryLane(workInProgressRootRenderLanes);
+  }
+
+  var isTransition = requestCurrentTransition() !== NoTransition;
+
+  if (isTransition) {
+    if (ReactCurrentBatchConfig$3.transition !== null) {
+      var transition = ReactCurrentBatchConfig$3.transition;
+
+      if (!transition._updatedFibers) {
+        transition._updatedFibers = new Set();
+      }
+
+      transition._updatedFibers.add(fiber);
+    } // The algorithm for assigning an update to a lane should be stable for all
+    // updates at the same priority within the same event. To do this, the
+    // inputs to the algorithm must be the same.
+    //
+    // The trick we use is to cache the first of each of these inputs within an
+    // event. Then reset the cached values once we can be sure the event is
+    // over. Our heuristic for that is whenever we enter a concurrent work loop.
+
+    if (currentEventTransitionLane === NoLane) {
+      // All transitions within the same event are assigned the same lane.
+      currentEventTransitionLane = claimNextTransitionLane();
+    }
+
+    return currentEventTransitionLane;
+  } // Updates originating inside certain React methods, like flushSync, have
+  // their priority set by tracking it with a context variable.
+  //
+  // The opaque type returned by the host config is internally a lane, so we can
+  // use that directly.
+  // TODO: Move this type conversion to the event priority module.
+
+  var updateLane = getCurrentUpdatePriority();
+
+  if (updateLane !== NoLane) {
+    return updateLane;
+  } // This update originated outside React. Ask the host environment for an
+  // appropriate priority, based on the type of event.
+  //
+  // The opaque type returned by the host config is internally a lane, so we can
+  // use that directly.
+  // TODO: Move this type conversion to the event priority module.
+
+  var eventLane = getCurrentEventPriority();
+  return eventLane;
+}
+```
+
+Ok this has been a lot so far but the gist is:
+
+1. Create a root node through SO many layers:
+   - react-dom.createRoot(container, options)
+     - createContainer
+     - markContainerAsRoot
+     - listenToAllSupportedEvents
+     - return new ReactDOMRoot(root);
+
+That's it! We've ust gone through `ReactDOM.createRoot(document.getElementById('root')!)` up next we'll see how it compiles `jsx` & see how `.render(...)` works!
