@@ -150,7 +150,7 @@ function createRoot(container, options) {
 }
 ```
 
-My eyes are glazing over at the details that I don't really get / care about rn.
+My eyes are glazing over at the details that I don't really get / care about rn. The first major function is `createContainer`
 
 ### `createContainer`
 
@@ -180,6 +180,8 @@ function createContainer(
   );
 }
 ```
+
+Notice that it just returns the value returned from `createFiberRoot` which is:
 
 ### `createFiberRoot`
 
@@ -229,7 +231,28 @@ function createFiberRoot(
 }
 ```
 
+```js
+root.current = uninitializedFiber;
+uninitializedFiber.stateNode = root;
+```
+
+Which creates a new `FiberRootNode` here at
 The first line is `var root = new FiberRootNode(containerInfo, tag, hydrate, identifierPrefix, onRecoverableError);` which calls
+
+<div className="flex justify-start items-center">
+<Image src={'/images/brace-yourselves.jpg'} style={{
+    objectFit: 'cover',
+    borderRadius: 10,
+    height: '10%',
+    width: '10%',
+    marginLeft: 0,
+    marginRight: 10,
+}} width={200} height={200} alt="Brace Yourselves X is Coming" priority />
+_Heads up this is a lot & pretty important_
+
+</div>
+
+Fibers are the building blocks of every React component.
 
 ```js
 function FiberRootNode(
@@ -263,36 +286,39 @@ function FiberRootNode(
   this.identifierPrefix = identifierPrefix;
   this.onRecoverableError = onRecoverableError;
 
-  {
-    this.mutableSourceEagerHydrationData = null;
-  }
+{
+this.mutableSourceEagerHydrationData = null;
+}
 
-  {
-    this.effectDuration = 0;
-    this.passiveEffectDuration = 0;
-  }
+{
+this.effectDuration = 0;
+this.passiveEffectDuration = 0;
+}
 
-  {
-    this.memoizedUpdaters = new Set();
-    var pendingUpdatersLaneMap = (this.pendingUpdatersLaneMap = []);
+{
+this.memoizedUpdaters = new Set();
+var pendingUpdatersLaneMap = (this.pendingUpdatersLaneMap = []);
 
     for (var _i = 0; _i < TotalLanes; _i++) {
       pendingUpdatersLaneMap.push(new Set());
     }
-  }
 
-  {
-    switch (tag) {
-      case ConcurrentRoot:
-        this._debugRootType = hydrate ? 'hydrateRoot()' : 'createRoot()';
-        break;
+}
+
+{
+switch (tag) {
+case ConcurrentRoot:
+this.\_debugRootType = hydrate ? 'hydrateRoot()' : 'createRoot()';
+break;
 
       case LegacyRoot:
         this._debugRootType = hydrate ? 'hydrate()' : 'render()';
         break;
     }
-  }
+
 }
+}
+
 ```
 
 `createLaneMap` is this:
@@ -311,6 +337,7 @@ function createLaneMap(initial) {
 }
 ```
 
+Back in `createFiberRoot`:
 After creating the root node it calls `createHostRootFiber` on the line `var uninitializedFiber = createHostRootFiber(tag, isStrictMode);`
 
 ```js
@@ -424,7 +451,9 @@ function FiberNode(tag, pendingProps, key, mode) {
 ```
 
 Now we're back to `createFiberRoot` where it sets the root's (`root` came from `var root = new FiberRootNode(containerInfo, tag, hydrate, identifierPrefix, onRecoverableError)`) current property to the uninitialized fiber
-and we set the `stateNode` property on `unitializedFiber` to `root`. Notice how the relationship between the two
+and we set the `stateNode` property on `unitializedFiber` to `root`.
+
+Notice that there's a bidirectional link between the created fiber root node: `root` and the uninitialized fiber: `uninitializedFiber` here:
 
 ```js
 ...
