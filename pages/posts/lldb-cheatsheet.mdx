@@ -1,0 +1,128 @@
+---
+title: LLDB cheatsheet
+date: 2025/1/25
+tag: lldb
+author: You
+---
+
+## LLDB Cheat Sheet
+
+### Setup and Basics
+
+| Command          | Alias | Description                          |
+| ---------------- | ----- | ------------------------------------ |
+| `lldb <program>` |       | Launch LLDB with a specific program. |
+| `run`            | `r`   | Start or restart the program.        |
+| `quit`           | `q`   | Exit LLDB.                           |
+
+---
+
+### Breakpoints
+
+| Command                                   | Alias | Description                                   |
+| ----------------------------------------- | ----- | --------------------------------------------- |
+| `breakpoint set --file <file> --line <n>` | `b`   | Set a breakpoint at a specific file and line. |
+| `breakpoint list`                         |       | List all breakpoints.                         |
+| `breakpoint delete`                       |       | Delete all breakpoints.                       |
+| `breakpoint delete <id>`                  |       | Delete a specific breakpoint by ID.           |
+
+---
+
+### Navigating Execution
+
+| Command            | Alias | Description                                                 |
+| ------------------ | ----- | ----------------------------------------------------------- |
+| `step`             | `s`   | Step into the next line or function call.                   |
+| `next`             | `n`   | Step over the current line (skips stepping into functions). |
+| `finish`           |       | Step out of the current function and return to the caller.  |
+| `continue`         | `c`   | Resume execution until the next breakpoint or program ends. |
+| `thread backtrace` | `bt`  | Display the current thread's call stack.                    |
+
+---
+
+### Inspecting Code and Variables
+
+| Command                 | Alias | Description                                                |
+| ----------------------- | ----- | ---------------------------------------------------------- |
+| `frame variable`        | `v`   | Show all variables in the current frame.                   |
+| `frame variable <name>` |       | Show a specific variable in the current frame.             |
+| `print <expression>`    | `p`   | Evaluate and print the value of an expression or variable. |
+| `frame info`            |       | Show information about the current frame.                  |
+
+---
+
+### Working with Threads and Frames
+
+| Command              | Alias | Description                                   |
+| -------------------- | ----- | --------------------------------------------- |
+| `thread list`        |       | List all threads in the program.              |
+| `thread select <id>` |       | Switch to a specific thread by ID.            |
+| `frame select <id>`  |       | Switch to a specific frame in the call stack. |
+| `thread step-in`     |       | Step into the current thread’s execution.     |
+
+---
+
+### Examining Memory
+
+| Command                          | Description                                 |
+| -------------------------------- | ------------------------------------------- |
+| `memory read <address>`          | Read memory at a specific address.          |
+| `memory write <address> <value>` | Write a value to a specific memory address. |
+
+---
+
+### Environment Variables
+
+| Command                                      | Description                                         |
+| -------------------------------------------- | --------------------------------------------------- |
+| `settings set target.env-vars <key>=<value>` | Set an environment variable for the target program. |
+| `settings show target.env-vars`              | Show all environment variables set for the target.  |
+
+---
+
+### Advanced Commands
+
+| Command                         | Description                                   |
+| ------------------------------- | --------------------------------------------- |
+| `watchpoint set variable <var>` | Stop execution when a variable is modified.   |
+| `disassemble`                   | Show the disassembly of the current function. |
+| `expression <expr>`             | Evaluate and execute a new expression.        |
+
+---
+
+### Shortcuts for Workflow
+
+| Scenario                  | Commands                   |
+| ------------------------- | -------------------------- |
+| Step into a function call | `step` or `s`              |
+| Skip over a function call | `next` or `n`              |
+| Exit the current function | `finish`                   |
+| Resume execution          | `continue` or `c`          |
+| Inspect all variables     | `frame variable` or `v`    |
+| Check where you are       | `frame info`               |
+| View the call stack       | `thread backtrace` or `bt` |
+
+---
+
+### Example Workflow
+
+1. **Set a breakpoint**:
+   ```lldb
+   (lldb) breakpoint set --file main.rs --line 10
+   ```
+2. **Run the program**:
+   ```lldb
+   (lldb) run
+   ```
+3. **Step through the code**:
+   ```lldb
+    (lldb) step
+   ```
+4. **Inspect variables**:
+   ```lldb
+   (lldb) frame variable
+   ```
+5. **Continue execution**:
+   ```lldb
+   (lldb) continue
+   ```
