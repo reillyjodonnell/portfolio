@@ -1,0 +1,45 @@
+---
+title: Overview of Cloudflare Workers Part 1
+date: 2025/2/15
+description: tldr; v8 isolates are the magic behind cloudflare workers
+tag: cloudflare, serverless, v8
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="/images/cloudflare.webp"
+  />
+</div>
+
+## history?
+
+Serverless is EVERYWHERE and for good reason: nearly infinite scalability, physically closer to users, and pay-for-what-you-use pricing. But not without tradeoffs — vendor lock-in, (potentially) higher costs, and the infamous cold-starts.
+
+## cf’s solution
+
+In response to the issues of cold starts, CF introduced Workers. Workers are **v8 isolates** running throughout their 300+ data centers. Users provide js code, and it runs as soon as the isolate is provisioned, eliminating the main annoying characteristic of serverless — cold starts. Contrasted to typical serverless functions which need to spin up an entire vm/container.
+
+## wait — v8 iso-whats?
+
+v8 — yeah that [one](<[https://v8.dev/](https://v8.dev/)>) is an individual in-process js/wasm sandbox running in a single OS process. V8 isolates _logically_ isolate their JavaScript heaps (variables, objects, etc.), meaning **one isolate cannot directly access another’s memory**. However, they run in the **same OS process**, sharing the _same virtual memory space_. Most importantly, they spin up fast (Cloudflare reported an avg speed of [5ms](<[https://blog.cloudflare.com/cloud-computing-without-containers/#:~:text=Because%20Workers%20don%E2%80%99t%20have%20to%20start%20a%20process%2C%20Isolates%20start%20in%205%20milliseconds%2C%20a%20duration%20which%20is%20imperceptible](https://blog.cloudflare.com/cloud-computing-without-containers/#:~:text=Because%20Workers%20don%E2%80%99t%20have%20to%20start%20a%20process%2C%20Isolates%20start%20in%205%20milliseconds%2C%20a%20duration%20which%20is%20imperceptible)>)
+
+## what’s the catch?
+
+Ah fair. You should know by now nothing is without tradeoffs. While v8 isolates reduces cold starts to a nearly invisible 5ms, there are still intrinsic difficulties in scaling. With isolates sharing the total compute, what happens when one takes forever and blocks the main thread (this is js after all)? Or how do you manage the total memory so that you don’t get a OOM and linux kernel decides to kill any process it deems less valuable? Cloudflare’s employed some really cool engineering to address this plus extra security concerns. Stay tuned for part 2!
+
+##
+
+sauces
+
+- [https://www.infoq.com/presentations/cloudflare-v8/](https://www.infoq.com/presentations/cloudflare-v8/)
+- [https://developers.cloudflare.com/workers/reference/security-model/](https://developers.cloudflare.com/workers/reference/security-model/)
+- [https://developers.cloudflare.com/workers/reference/how-workers-works/](https://developers.cloudflare.com/workers/reference/how-workers-works/)
+
+.
