@@ -10,6 +10,16 @@ author: You
 
 I've been digging a lot into processes. For those not super familiar - a process, from an application pov, is an individual unit of execution with it's own memory and resources managed by the OS.
 
+But why would do we use it? What's it good for?
+
+To start I want to paint what it would look like _without_ it - imagine having to juggle 16 quintillion addressess, ensuring they don't overwrite another projects, and managing what the cpu executes every cycle. It would be complete chaos!
+
+Processes are just an abstraction. All of that work is done for us, and we can just write a program that thinks it's the sole application on the entire computer.
+
+Our TS app can execute line by line and access the disk without worrying about HOW the orchestration is done.
+
+### Usage in bun
+
 It's neatly abstracted away from us - i.e., in Bun if you want to create a new process, you use this API:
 
 ```ts
@@ -18,9 +28,8 @@ const child = Bun.spawn(['bun', 'child.ts']);
 
 where `child.ts` is something for bun to execute. It could be as simple as
 
-```child.ts
-console.log("Hello from child.ts");
-
+```ts
+console.log('Hello from child.ts');
 ```
 
 Typically separate processes need to communicate - this is called Inter-process communication (IPC.) IPC can use a few different mechanisms for communication - sockets (e.g. udp/tcp), pipes, a shared memory space provided by the OS
