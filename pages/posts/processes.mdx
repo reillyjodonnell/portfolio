@@ -1,0 +1,131 @@
+---
+title: Processes
+description: A quick overview / dive into how linux handles processes
+date: 2025/3/13
+tag: systems, bun, node
+author: You
+---
+
+## Processes
+
+I've been digging a lot into processes. For those not super familiar - a process, from an application pov, is an individual unit of execution with it's own memory and resources managed by the OS.
+
+But why would do we use it? What's it good for?
+
+To start I want to paint what it would look like _without_ it - imagine having to juggle 16 quintillion addressess, ensuring they don't overwrite another projects, and managing what the cpu executes every cycle. It would be complete chaos!
+
+Processes are just an abstraction. All of that work is done for us, and we can just write a program that thinks it's the sole application on the entire computer.
+
+Our TS app can execute line by line and access the disk without worrying about HOW the orchestration is done.
+
+### Usage in bun
+
+It's neatly abstracted away from us - i.e., in Bun if you want to create a new process, you use this API:
+
+```ts
+const child = Bun.spawn(['bun', 'child.ts']);
+```
+
+where `child.ts` is something for bun to execute. It could be as simple as
+
+```ts
+console.log('Hello from child.ts');
+```
+
+Typically separate processes need to communicate - this is called Inter-process communication (IPC.) IPC can use a few different mechanisms for communication - sockets (e.g. udp/tcp), pipes, a shared memory space provided by the OS
+
+You've prob used IPC between two processes before and didn't even realize it. Here's a common example of ipc:
+
+```bash
+ls | grep "foo"
+```
+
+To communicate with a child process in Bun, you can use the `ipc` option in the `spawn` function:
+
+```ts
+const child = Bun.spawn(['bun', 'child.ts'], {
+  ipc(message, childProc) {
+    /**
+     * The message received from the sub process (child)
+     **/
+    console.log('message from child:', message);
+  },
+  // pipes child process stdout to parent process stdout
+  // by default we won't see child's stdout bc it's contained in it's own process
+  stdout: 'inherit',
+});
+
+child.send('No, I am your father');
+```
+
+then we update the child:
+
+```ts
+process.on('message', (message) => {
+  console.log('message from parent:', message);
+  process.send("No that's not true, that's impossible!");
+});
+```
+
+We then get the log:
+
+```
+$ bun run index.ts
+message from parent: No, I am your father
+message from child: No that's not true, that's impossible!
+```
+
+But that's just the surface level. What's deeper? What's the abstraction that Bun is wrapping?
+
+### Linux view of processes
+
+The OS is interfaced through system calls. In Unix, the fork() syscall creates a new process by duplicating the parent’s virtual address space. Initially, the child shares the same physical memory pages as the parent (via copy-on-write), but changes are isolated to each process’s separate address space.
+
+Here's a good example to demonstrate this in zig:
+
+```zig
+const std = @import("std");
+
+pub fn main() !void {
+    var is_copied: bool = false;
+
+    const pid = try std.posix.fork();
+
+    switch (pid) {
+        -1 => {
+            return std.debug.print("fork failed\n", .{});
+        },
+        0 => {
+            std.debug.print("\n~~~child~~~\n", .{});
+            std.debug.print("before write - address: {any}, value: {}\n", .{ &is_copied, is_copied });
+            is_copied = true;
+            std.debug.print("after write  - address: {any}, value: {}\n", .{ &is_copied, is_copied });
+        },
+        else => {
+            std.time.sleep(1 * std.time.ns_per_s); // Wait for child to finish
+            std.debug.print("\n~~~parent~~~\n", .{});
+            std.debug.print("parent - address: {any}, value: {}\n", .{ &is_copied, is_copied });
+        },
+    }
+}
+
+
+```
+
+When run the output is:
+
+```
+$ zig run main.zig
+
+~~~child~~~
+before write - address: bool@7ffe18b8b003, value: false
+after write  - address: bool@7ffe18b8b003, value: true
+
+~~~parent~~~
+parent - address: bool@7ffe18b8b003, value: false
+
+```
+
+Notice that the memory addresses are THE SAME in both the child and parent! Why is that??
+
+The child and parent have identical but separate address spaces. The variable defined before the fork has the value in both address spaces. This separate address space allows the changes to be independent of each other.
