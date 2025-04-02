@@ -1,0 +1,694 @@
+---
+title: Diving into SSR with bun & react 19!
+date: 2025/4/1
+description: hydration, server rendering, and more!
+tag: react, bun
+author: You
+---
+
+import Image from 'next/image';
+
+## Intro
+
+Hello it’s me from the future! I originally was going to go over file based routing but pivoted to going over important SSR concepts with React / how Bun makes it easy. It’s full of struggles with hydration (mismatches), React entry points, and how Bun handles jsx/ts.
+
+At the end you’ll have a better grasp on how React handles rendering on the server via a stream, hydrating on the client, and you’ll have a working project to show!
+
+Hope you learn something new!
+
+## Start
+
+Begin with \`bun init\` to start a new project. Bun comes with TS & JSX baked in (literally has a transpiler step in the code that converts ts / JSX to js - \[lexer is here if interested\]([https://github.com/oven-sh/bun/blob/main/src/js_lexer.zig](https://github.com/oven-sh/bun/blob/main/src/js_lexer.zig)) which means we don’t have to worry about that.
+
+Ok the first step with ANY problem is that we need to understand the problem and have a starting mental model of HOW the problem works.
+
+When you use an app that uses routing in general when you navigate to “/some/route” the files (i.e. html, css, js) mapped to those routes are sent to the browser. But something has to send it?
+
+Have the intuition for what can send it?
+
+\-
+
+\-
+
+an http server!
+
+## HTTP server
+
+Bun has it’s own syntax for an http server \[here\]([https://bun.sh/docs/api/http](https://bun.sh/docs/api/http))
+
+With this:
+
+```typescript
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': () => new Response('Hello World'),
+    '/bye': () => new Response('Goodbye!'),
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+```
+
+run `bun run index.ts`
+
+Got an error?
+
+<div data-node-type="callout">
+  <div data-node-type="callout-emoji">⚠</div>
+  <div data-node-type="callout-text">Expected fetch() to be a function</div>
+</div>
+
+That just means you need the latest version of bun w `bun upgrade`
+
+If you see the console log you’re golden!
+
+Let’s visit `localhost:3000/` you should see “hello world” in the browser!
+
+If you check the Network tab it’ll also show a content type of `text/plain;charset=utf-8`
+
+## Add React
+
+`bun i react && bun i -D @types/react`
+
+Now I sorta want to just return some jsx for each separate route. Like:
+
+```typescript
+import React from 'react';
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': () => new Response(Hello),
+    '/bye': () => new Response(Bye),
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+function Hello() {
+  const [name, _] = React.useState('World');
+  return <h1>Hello, {name}!</h1>;
+}
+
+function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+> note since we’re using JSX we HAVE to update the file to end in .tsx/.jsx
+
+But there’s a fundamental flaw in this idea.
+
+Anything that crosses network boundaries has to be serialized - fancy word for a string.
+
+So how do we turn Hello and Bye to strings?
+
+if we invoke via `<Hello />` That's not getting the underlying string bc that goes through React and instantiates a fiber and all that. What we're really wanting / needing is the underlying HTML that represents this code.
+
+React offers 2 api’s to get the underlying HTML and it’s the basis of all SSR apps. `renderToString` which transforms your react tree into html and `renderToReadableStream` which does the same but streams it to better scale / gets you a faster Time To First Byte TTFB.
+
+We’ll do the stream approach but both work :D
+
+Make sure you’ve got react-dom which is where the above api comes from
+
+`bun i react-dom`
+
+## Streams in bun
+
+Streams are as simple as passing it to the Response as the first argument:
+
+```typescript
+import React from 'react';
+import { renderToReadableStream } from 'react-dom/server';
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => new Response(await renderToReadableStream(<Hello />)),
+    '/bye': async () => new Response(await renderToReadableStream(<Bye />)),
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+function Hello() {
+  const [name, _] = React.useState('World');
+  return <h1>Hello, {name}!</h1>;
+}
+
+function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+When you run the server and visit the above routes it’s working!
+
+## Sprinkle some 🪄 interactivity
+
+Let’s make the Hello component more interactive by utilizing the dispatch and returning some stuff to make it interactive to the user:
+
+```typescript
+function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <div>
+      <h1>Hello, {name}!</h1>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <p>Type your name above!</p>
+    </div>
+  );
+}
+```
+
+Sweet! Now let’s restart the server and run it and visit localhost:3000/
+
+> tired of restarting? `bun run --hot index.tsx`
+
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1743444277228/7bcb7b1e-ff12-480d-bbd5-210540bc09c9.png align="center")
+
+It’s not updating??
+
+Let’s look at the payload sent from the server:
+
+```xml
+<div>
+    <h1>Hello,
+    <!-- -->
+    World
+    <!-- -->
+    !</h1>
+    <input type="text" value="World"/>
+    <p>Type your name above!</p>
+</div>
+```
+
+So when we’re typing it’s updating the value but that World is hardcoded. We need the corresponding JS that updates the string in the html. This is called _hydration_
+
+We’ll need to update the server to send the needed JS so that when the user DOES type something the JS runs, updating the state, and updating what we see visually.
+
+But before that we’ll need to explain some really important React concepts bc the above code needs to change a bit:
+
+### Quick aside: Important React ideas before we go further
+
+React needs an entry point in the HTML. It’s a major part of HOW react works under the hood - specifically it’s diffing algorithm.
+
+Which means we’ll need to give react an entry point - canonically this is some html `id` we target.
+
+Then we need to “attach” react to that targeted entry point via a `hydrateRoot` call
+
+to implement we’ll need the html created from `renderToReadableStream` then a js file containing a `hydrateRoot` call to attach react.
+
+Back to the code:
+
+## Providing an entry point for React
+
+From the docs for one of the arguments to `renderToReadableStream`
+
+> - **optional** `bootstrapScripts`: An array of string URLs for the `<script>` tags to emit on the page. Use this to include the `<script>` that calls [`hydrateRoot`.](https://react.dev/reference/react-dom/client/hydrateRoot) [Omit it if](https://react.dev/reference/react-dom/client/hydrateRoot) you don’t want to run React on the client at all.
+
+So we’ll need to prep a js file and attach it as the arg.
+
+The gist of what the script needs to do is -
+
+1. target some html node
+2. pass that node into `hydrateRoot` as well as the react node we want to render (Hello/ Bye) - we’ll need to import
+
+\[here’s how it’s done in the docs\] ([https://react.dev/reference/react-dom/client/hydrateRoot#:~:text=import%20%7B%20hydrateRoot,reactNode)%3B](<https://react.dev/reference/react-dom/client/hydrateRoot#:~:text=import%20%7B%20hydrateRoot,reactNode)%3B>))
+
+```javascript
+import { hydrateRoot } from 'react-dom/client';
+import { Hello } from '.';
+const domNode = document.getElementById('root');
+if (domNode) hydrateRoot(domNode, <Hello />);
+```
+
+Then we’ll need to include this file (main.js) in the arguments passed like so:
+
+```typescript
+new Response(
+        await renderToReadableStream(
+          `
+      <html>
+        <head>
+          <title>My Bun App</title>
+          </head>
+        <body>
+        <div id="root">
+        ${(<Hello />)}
+        </div>
+        </body>
+      </html>`,
+          {
+            bootstrapScripts: ['/main.js'],
+          }
+        )
+      ),
+```
+
+This doesn’t work though!
+
+To understand let’s go look at what `renderToReadableStream` \[here\]([https://react.dev/reference/react-dom/server/renderToReadableStream#parameters](https://react.dev/reference/react-dom/server/renderToReadableStream#parameters))
+
+The first parameter is:
+
+> A React node you want to render to HTML. For example, a JSX element like `<App />`. It is expected to represent the entire document, so the `App` component should render the `<html>` tag.
+
+So we’ll need to update and have it render html instead of a string.
+
+Then for the second object it says:
+
+> - **optional** `bootstrapScripts`: An array of string URLs for the `<script>` tags to emit on the page. Use this to include the `<script>` that calls [`hydrateRoot`.](https://react.dev/reference/react-dom/client/hydrateRoot) [Omit it if](https://react.dev/reference/react-dom/client/hydrateRoot) you don’t want to run React on the client at all.
+
+Further down it says:
+
+`React will inject the doctype and your bootstrap <script> tags into the resulting HTML stream:`
+
+Let’s make the first change and take a look at the response from the server.
+
+Here’s the change:
+
+```typescript
+import React from 'react';
+import { renderToReadableStream } from 'react-dom/server';
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => {
+      return new Response(
+        await renderToReadableStream(<Hello />, {
+          bootstrapScripts: ['/main.js'],
+        })
+      );
+    },
+
+    '/bye': async () => new Response(await renderToReadableStream(<Bye />), {}),
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+export function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <html>
+      <head>
+        <title>My Bun App</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Hello, {name}!</h1>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p>Type your name above!</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+We get a 404 for main.js!
+
+The request that comes in for /main.js looks something like `localhost:3000/main.js` since there’s not a route covered / we’re not handling a fallback it automatically returns a 404.
+
+Also remember earlier when we talked about renderToString (which is blocking in that the response isn’t send until the entire react tree is rendered and turned into a string?) and it’s alt the renderToReadableStream? There’s the two same ideas for reading a file and returning it’s contents for http servers. Thankfully Bun makes it REALLY easy to stream a file. \[docs here\]([https://bun.sh/docs/api/http#streaming-files](https://bun.sh/docs/api/http#streaming-files))
+
+Their example is
+
+```typescript
+Bun.serve({
+  fetch(req) {
+    return new Response(Bun.file('./hello.txt'));
+  },
+});
+```
+
+That’s dead simple. Under the hood Bun is auto streaming it so no matter how big the file is it will always respond quickly!
+
+Let’s put these 2 ideas - handling the request for /main.js and serving the contents of a file as a stream together:
+
+```typescript
+import React from 'react';
+import { renderToReadableStream } from 'react-dom/server';
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => {
+      return new Response(
+        await renderToReadableStream(<Hello />, {
+          bootstrapScripts: ['/main.js'],
+        })
+      );
+    },
+
+    '/bye': async () => new Response(await renderToReadableStream(<Bye />), {}),
+  },
+  fetch(req) {
+    if (req.url === 'main.js') new Response(Bun.file('main.js'));
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+export function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <html>
+      <head>
+        <title>My Bun App</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Hello, {name}!</h1>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p>Type your name above!</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+I also added a fallback so now it manually returns a 404. Note that I’ve used the fetch. This is straight from the docs. Read more [here](<https://bun.sh/docs/api/http#:~:text=//%20(optional)%20fallback%20for%20unmatched%20routes%3A%0A%20%20//%20Required%20if%20Bun%27s%20version%20%3C%201.2.3%0A%20%20fetch(req)%20%7B%0A%20%20%20%20return%20new%20Response(%22Not%20Found%22%2C%20%7B%20status%3A%20404%20%7D)%3B%0A%20%20%7D%2C>)
+
+Notice my mistake? I’m checking if the `url === 'main.js'` which it never will. The req.url will be something like `http://localhost:3000/main.js`
+
+It’s the pathname we want!
+
+```typescript
+ async fetch(req) {
+    const path = new URL(req.url).pathname;
+    if (path === '/main.js') return new Response(Bun.file('main.js'));
+    return new Response('Not Found', { status: 404 });
+  }
+```
+
+Rerun the server (if applicable) and check the network tab
+
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1743454854641/2fe24355-3847-4a38-bd17-c1f2871b1805.png align="center")
+
+no 404! But when we type it doesn’t update. In the logs:
+
+`Uncaught SyntaxError: Cannot use import statement outside a module (at main.js:1:1)`
+
+Ah ok. Well the browser DOES understand ESM. The problem can be found when we inspect the html returned in the network tab:
+
+```xml
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="preload" as="script" fetchPriority="low" href="/main.js"/>
+        <title>My Bun App</title>
+    </head>
+    <body>
+        <div id="root">
+            <h1>Hello,
+            <!-- -->
+            World
+            <!-- -->
+            !</h1>
+            <input type="text" value="World"/>
+            <p>Type your name above!</p>
+        </div>
+        <script src="/main.js" async=""></script>
+    </body>
+</html>
+```
+
+In the docs you can use:  
+**optional** `bootstrapModules`: Like `bootstrapScripts`, but emits [`<script type="module">`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) instead.
+
+Perfect! Let’s use that instead of the `bootstrapScripts`
+
+Ok! Here’s the updated code:
+
+```typescript
+import React from 'react';
+import { renderToReadableStream } from 'react-dom/server';
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => {
+      return new Response(
+        await renderToReadableStream(<Hello />, {
+          bootstrapModules: ['/main.js'],
+        })
+      );
+    },
+
+    '/bye': async () => new Response(await renderToReadableStream(<Bye />), {}),
+  },
+  async fetch(req) {
+    const path = new URL(req.url).pathname;
+    if (path === '/main.js') return new Response(Bun.file('main.js'));
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+export function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <html>
+      <head>
+        <title>My Bun App</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Hello, {name}!</h1>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p>Type your name above!</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+Ok another error! We’ve almost got this!
+
+`Uncaught SyntaxError: Unexpected token '<' (at main.js:6:24)`
+
+Ah we’re using JSX in the main.js file (not really js) :/ so we’ll need to transpile it with Bun. We can do that with `Bun.build` we’ve got a couple options - we can do it for every request or do it once when the server starts/restarts… The second is a better idea.
+
+Also I’m going to update main.js to be main.tsx since it’s going to be transpiled/compiled/whatever you wanna call it.
+
+We want to compile that file when the server starts and output it somewhere. Then when requests come in for that file we can just serve the js file.
+
+Ok. All in you get this:
+
+```typescript
+import React from 'react';
+import { renderToReadableStream } from 'react-dom/server';
+
+Bun.build({
+  entrypoints: ['./main.tsx'],
+  outdir: 'dist',
+});
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => {
+      return new Response(
+        await renderToReadableStream(<Hello />, {
+          bootstrapModules: ['/dist/main.js'],
+        })
+      );
+    },
+
+    '/bye': async () => new Response(await renderToReadableStream(<Bye />), {}),
+  },
+  async fetch(req) {
+    const path = new URL(req.url).pathname;
+    if (path === '/main.js') return new Response(Bun.file('main.js'));
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+
+export function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <html>
+      <head>
+        <title>My Bun App</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Hello, {name}!</h1>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p>Type your name above!</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+Another error! `Uncaught ReferenceError: Bun is not defined` because we’re sending `main.js` to the client to be executed to enable hydration, our import for hello, `import { Hello } from '.'`, is sending all of the code in that file!
+
+To resolve this, move the components into a separate file. Which means we need to:
+
+1. change the import in main.tsx
+2. in `index.tsx` import the components in the location you chose, `app.tsx` for me.
+
+Ok. After this I’ve run into ANOTHER error. Hydration mismatch causing the cpu to spike to 100%.
+
+### hydrateRoot / wtf even is hydration
+
+In trying to debug this cpu issue I found some gaps in my understanding.
+
+To start the definition is really confusing imo:
+
+> `hydrateRoot` lets you display React components inside a browser DOM node whose HTML content was previously generated by [`react-dom/server`](https://react.dev/reference/react-dom/server)
+
+Further down in the docs on hydrateRoot there’s a bit more helpful info:
+
+> Call hydrateRoot to “attach” React to existing HTML that was already rendered by React in a server environment… hydrateRoot() expects the rendered content to be identical with the server-rendered content.
+
+that explains everything we need to know: when you render html from react, the rendered content has to be identical to the server-content and since hydrate root expects an entry - it has to be THE entry, i.e. the html tag aka document.
+
+## Let’s put it all together now!
+
+Ok, be sure to move the components to their own files. Then update `main.tsx`
+
+```typescript
+import { hydrateRoot } from 'react-dom/client';
+import { Hello } from './app';
+
+hydrateRoot(document, <Hello />);
+```
+
+`index.tsx`
+
+```typescript
+import { renderToReadableStream } from 'react-dom/server';
+import { Bye, Hello } from './app';
+
+await Bun.build({
+  entrypoints: ['./main.tsx'],
+  outdir: 'dist',
+});
+
+Bun.serve({
+  port: 3000,
+  routes: {
+    '/': async () => {
+      try {
+        const stream = await renderToReadableStream(<Hello />, {
+          bootstrapModules: ['main.js'],
+        });
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/html',
+          },
+          status: 200,
+        });
+      } catch (error) {
+        console.error('Error rendering Hello component:', error);
+        return new Response('Internal Server Error', { status: 500 });
+      }
+    },
+    // '/bye': async () => new Response(await renderToReadableStream(<Bye />), {}),
+  },
+  async fetch(req) {
+    const path = new URL(req.url).pathname;
+    if (path === '/main.js')
+      return new Response(Bun.file('dist/main.js'), {
+        headers: {
+          'Content-Type': 'application/javascript',
+        },
+      });
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log('Server running on http://localhost:3000');
+```
+
+`app.tsx`
+
+```typescript
+import React from 'react';
+
+export function Hello() {
+  const [name, setName] = React.useState('World');
+  return (
+    <html>
+      <head>
+        <title>My Bun App</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Hello, {name}!</h1>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p>Type your name above!</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export function Bye() {
+  return <h1>Goodbye!</h1>;
+}
+```
+
+And what it looks like visually:
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    unoptimized
+    style={{ width: '100%', height: 'auto' }}
+    src="https://cdn.hashnode.com/res/hashnode/image/upload/v1743565127001/d651468b-ce6d-44dd-80b0-84f5695bd1a8.png"
+  />
+</div>

@@ -5,11 +5,7 @@
 import withNextra from 'nextra';
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  images: {
-    domains: ['images.unsplash.com', 'cdn.hashnode.com', 'unsplash.com'],
-  },
-};
+const nextConfig = {};
 
 export default withNextra({
   theme: 'nextra-theme-blog',
