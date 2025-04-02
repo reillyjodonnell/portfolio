@@ -13,9 +13,13 @@ import Image from 'next/image';
     width={0}
     height={0}
     sizes="100vw"
+    unoptimized
+
     style={{ width: '100%', height: 'auto' }}
     src="https://images.unsplash.com/photo-1594372365401-3b5ff14eaaed?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTd8fHNwbGFzaHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=900&q=60"
-  />
+
+/>
+
 </div>
 ## What's a closure?
 
@@ -85,4 +89,3 @@ The reason: React doesn't immediately update `count` so we are left with a _stal
 Instead, `count` (state) won't be updated until React **renders** the component again.
 
 This is because <a href="https://react.dev/learn/state-as-a-snapshot" target="_blank">state behaves like a snapshot</a>
-
