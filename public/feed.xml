@@ -4,8 +4,34 @@
         <description><![CDATA[Reilly O'Donnell]]></description>
         <link>https://reilly.dev</link>
         <generator>RSS for Node</generator>
-        <lastBuildDate>Sat, 28 Feb 2026 21:32:48 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 28 Feb 2026 21:59:39 GMT</lastBuildDate>
         <atom:link href="https://reilly.dev/feed.xml" rel="self" type="application/rss+xml"/>
+        <item>
+            <title><![CDATA[Building Typesafe Full Stack App w/ Apollo Server 4, Railway, Prisma, Pothos, Next, & TS (part 1 - setting up the server)]]></title>
+            <description><![CDATA[Pothos makes getting e2e typesafety really easy! In this article we'll be setting up a full stack app with Apollo Server 4, Railway, Prisma, Pothos, Next, & TS]]></description>
+            <link>/posts/build-typesafe-full-stack-app-with-prisma</link>
+            <guid isPermaLink="true">/posts/build-typesafe-full-stack-app-with-prisma</guid>
+            <category><![CDATA[react]]></category>
+            <category><![CDATA[typescript]]></category>
+            <category><![CDATA[nextjs]]></category>
+            <category><![CDATA[apollo]]></category>
+            <category><![CDATA[graphql]]></category>
+            <category><![CDATA[prisma]]></category>
+            <category><![CDATA[railway]]></category>
+            <category><![CDATA[pothos]]></category>
+            <dc:creator><![CDATA[You]]></dc:creator>
+            <pubDate>Thu, 05 Jan 2023 05:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[Building UDP server from scratch in Zig]]></title>
+            <description><![CDATA[In this post we'll build a UDP server from scratch in Zig. We'll cover how to create a socket, bind it to a specific address and port, and listen for messages.]]></description>
+            <link>/posts/creating-udp-server-from-scratch-in-zig</link>
+            <guid isPermaLink="true">/posts/creating-udp-server-from-scratch-in-zig</guid>
+            <category><![CDATA[zig]]></category>
+            <category><![CDATA[networking]]></category>
+            <dc:creator><![CDATA[You]]></dc:creator>
+            <pubDate>Sun, 07 Jan 2024 05:00:00 GMT</pubDate>
+        </item>
         <item>
             <title><![CDATA[Diving into SSR with bun & react 19!]]></title>
             <description><![CDATA[hydration, server rendering, and more!]]></description>
@@ -27,30 +53,15 @@
             <pubDate>Thu, 31 Aug 2023 04:00:00 GMT</pubDate>
         </item>
         <item>
-            <title><![CDATA[Building UDP server from scratch in Zig]]></title>
-            <description><![CDATA[In this post we'll build a UDP server from scratch in Zig. We'll cover how to create a socket, bind it to a specific address and port, and listen for messages.]]></description>
-            <link>/posts/creating-udp-server-from-scratch-in-zig</link>
-            <guid isPermaLink="true">/posts/creating-udp-server-from-scratch-in-zig</guid>
-            <category><![CDATA[zig]]></category>
-            <category><![CDATA[networking]]></category>
-            <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Sun, 07 Jan 2024 05:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[Building Typesafe Full Stack App w/ Apollo Server 4, Railway, Prisma, Pothos, Next, & TS (part 1 - setting up the server)]]></title>
-            <description><![CDATA[Pothos makes getting e2e typesafety really easy! In this article we'll be setting up a full stack app with Apollo Server 4, Railway, Prisma, Pothos, Next, & TS]]></description>
-            <link>/posts/build-typesafe-full-stack-app-with-prisma</link>
-            <guid isPermaLink="true">/posts/build-typesafe-full-stack-app-with-prisma</guid>
+            <title><![CDATA[Getting Closure with React]]></title>
+            <description><![CDATA[How closures work & how it's used in React]]></description>
+            <link>/posts/getting-closure-with-react</link>
+            <guid isPermaLink="true">/posts/getting-closure-with-react</guid>
             <category><![CDATA[react]]></category>
             <category><![CDATA[typescript]]></category>
-            <category><![CDATA[nextjs]]></category>
-            <category><![CDATA[apollo]]></category>
-            <category><![CDATA[graphql]]></category>
-            <category><![CDATA[prisma]]></category>
-            <category><![CDATA[railway]]></category>
-            <category><![CDATA[pothos]]></category>
+            <category><![CDATA[javascript]]></category>
             <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Thu, 05 Jan 2023 05:00:00 GMT</pubDate>
+            <pubDate>Mon, 17 Apr 2023 04:00:00 GMT</pubDate>
         </item>
         <item>
             <title><![CDATA[How to get sorted set in descending order with node redis]]></title>
@@ -62,26 +73,21 @@
             <pubDate>Sun, 04 Feb 2024 05:00:00 GMT</pubDate>
         </item>
         <item>
-            <title><![CDATA[Overview of Cloudflare Workers Part 1]]></title>
-            <description><![CDATA[tldr; v8 isolates are the magic behind cloudflare workers]]></description>
-            <link>/posts/overview-of-cloudflare-workers-part-1</link>
-            <guid isPermaLink="true">/posts/overview-of-cloudflare-workers-part-1</guid>
-            <category><![CDATA[cloudflare]]></category>
-            <category><![CDATA[serverless]]></category>
-            <category><![CDATA[v8]]></category>
+            <title><![CDATA[Inside React (Part 1) - how to get started.]]></title>
+            <description><![CDATA[How to get started with understanding how React works under the hood]]></description>
+            <link>/posts/inside-react-part-1</link>
+            <guid isPermaLink="true">/posts/inside-react-part-1</guid>
+            <category><![CDATA[react]]></category>
             <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Sat, 15 Feb 2025 05:00:00 GMT</pubDate>
+            <pubDate>Wed, 17 Jul 2024 04:00:00 GMT</pubDate>
         </item>
         <item>
-            <title><![CDATA[Getting Closure with React]]></title>
-            <description><![CDATA[How closures work & how it's used in React]]></description>
-            <link>/posts/getting-closure-with-react</link>
-            <guid isPermaLink="true">/posts/getting-closure-with-react</guid>
-            <category><![CDATA[react]]></category>
-            <category><![CDATA[typescript]]></category>
-            <category><![CDATA[javascript]]></category>
+            <title><![CDATA[LLDB cheatsheet]]></title>
+            <link>/posts/lldb-cheatsheet</link>
+            <guid isPermaLink="true">/posts/lldb-cheatsheet</guid>
+            <category><![CDATA[lldb]]></category>
             <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Mon, 17 Apr 2023 04:00:00 GMT</pubDate>
+            <pubDate>Sat, 25 Jan 2025 05:00:00 GMT</pubDate>
         </item>
         <item>
             <title><![CDATA[How to use Tailwind (NativeWind) with Expo]]></title>
@@ -95,6 +101,25 @@
             <pubDate>Fri, 01 Sep 2023 04:00:00 GMT</pubDate>
         </item>
         <item>
+            <title><![CDATA[Overview of Cloudflare Workers Part 1]]></title>
+            <description><![CDATA[tldr; v8 isolates are the magic behind cloudflare workers]]></description>
+            <link>/posts/overview-of-cloudflare-workers-part-1</link>
+            <guid isPermaLink="true">/posts/overview-of-cloudflare-workers-part-1</guid>
+            <category><![CDATA[cloudflare]]></category>
+            <category><![CDATA[serverless]]></category>
+            <category><![CDATA[v8]]></category>
+            <dc:creator><![CDATA[You]]></dc:creator>
+            <pubDate>Sat, 15 Feb 2025 05:00:00 GMT</pubDate>
+        </item>
+        <item>
+            <title><![CDATA[perf overhead on context flattener?]]></title>
+            <link>/posts/perf-overhead-on-context-flattener</link>
+            <guid isPermaLink="true">/posts/perf-overhead-on-context-flattener</guid>
+            <category><![CDATA[react]]></category>
+            <dc:creator><![CDATA[You]]></dc:creator>
+            <pubDate>Wed, 13 Aug 2025 04:00:00 GMT</pubDate>
+        </item>
+        <item>
             <title><![CDATA[Processes]]></title>
             <description><![CDATA[A quick overview / dive into how linux handles processes]]></description>
             <link>/posts/processes</link>
@@ -106,21 +131,13 @@
             <pubDate>Thu, 13 Mar 2025 04:00:00 GMT</pubDate>
         </item>
         <item>
-            <title><![CDATA[Inside React (Part 1) - how to get started.]]></title>
-            <description><![CDATA[How to get started with understanding how React works under the hood]]></description>
-            <link>/posts/inside-react-part-1</link>
-            <guid isPermaLink="true">/posts/inside-react-part-1</guid>
+            <title><![CDATA[⚛ React Tips - You're misusing the React useEffect hook (probably)]]></title>
+            <description><![CDATA[tldr; only use to sync external systems to React]]></description>
+            <link>/posts/react-tips-youre-misusing-the-react-useeffect-hook-probably</link>
+            <guid isPermaLink="true">/posts/react-tips-youre-misusing-the-react-useeffect-hook-probably</guid>
             <category><![CDATA[react]]></category>
             <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Wed, 17 Jul 2024 04:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[perf overhead on context flattener?]]></title>
-            <link>/posts/perf-overhead-on-context-flattener</link>
-            <guid isPermaLink="true">/posts/perf-overhead-on-context-flattener</guid>
-            <category><![CDATA[react]]></category>
-            <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Wed, 13 Aug 2025 04:00:00 GMT</pubDate>
+            <pubDate>Thu, 05 Jan 2023 05:00:00 GMT</pubDate>
         </item>
         <item>
             <title><![CDATA[6 Code Smells In React I Look Out For]]></title>
@@ -132,14 +149,6 @@
             <pubDate>Thu, 05 Jan 2023 05:00:00 GMT</pubDate>
         </item>
         <item>
-            <title><![CDATA[LLDB cheatsheet]]></title>
-            <link>/posts/lldb-cheatsheet</link>
-            <guid isPermaLink="true">/posts/lldb-cheatsheet</guid>
-            <category><![CDATA[lldb]]></category>
-            <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Sat, 25 Jan 2025 05:00:00 GMT</pubDate>
-        </item>
-        <item>
             <title><![CDATA[⚛ React Tips - Don't define component inside of another component]]></title>
             <description><![CDATA[tldr; Defining a component inside of another component creates a costly bug that causes unnecessary re-renders and can be solved by moving the child component outside of the parent component.]]></description>
             <link>/posts/react-tips-dont-define-component-inside-another-component</link>
@@ -147,15 +156,6 @@
             <category><![CDATA[react]]></category>
             <dc:creator><![CDATA[You]]></dc:creator>
             <pubDate>Mon, 19 Sep 2022 04:00:00 GMT</pubDate>
-        </item>
-        <item>
-            <title><![CDATA[⚛ React Tips - You're misusing the React useEffect hook (probably)]]></title>
-            <description><![CDATA[tldr; only use to sync external systems to React]]></description>
-            <link>/posts/react-tips-youre-misusing-the-react-useeffect-hook-probably</link>
-            <guid isPermaLink="true">/posts/react-tips-youre-misusing-the-react-useeffect-hook-probably</guid>
-            <category><![CDATA[react]]></category>
-            <dc:creator><![CDATA[You]]></dc:creator>
-            <pubDate>Thu, 05 Jan 2023 05:00:00 GMT</pubDate>
         </item>
         <item>
             <title><![CDATA[Send iMessage to a loved one from the terminal!]]></title>

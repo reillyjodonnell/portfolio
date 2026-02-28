@@ -37,3 +37,32 @@ pnpm create next-app --example blog my-blog
 ```
 
 Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+
+## View Tracking (Hidden)
+
+Per-post view counts are tracked server-side via Upstash Redis.
+
+1. Install the Upstash Redis integration from Vercel Marketplace for your project.
+2. Install the SDK:
+
+```bash
+npm install @upstash/redis
+```
+
+3. Link and pull env vars locally:
+
+```bash
+vercel link
+vercel env pull .env.development.local
+```
+
+4. Ensure these environment variables are present in Vercel (and locally if needed):
+	- `UPSTASH_REDIS_REST_URL`
+	- `UPSTASH_REDIS_REST_TOKEN`
+5. Deploy.
+
+To inspect counts locally or in CI:
+
+```bash
+bun run views:report
+```

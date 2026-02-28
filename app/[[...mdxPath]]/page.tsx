@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { FC } from 'react';
+import PostViewTracker from '../../components/post-view-tracker';
 import { useMDXComponents as getMDXComponents } from '../../mdx-components';
 
 export const generateStaticParams = generateStaticParamsFor('mdxPath');
@@ -187,6 +188,7 @@ const Page: FC<PageProps> = async (props) => {
   const { default: MDXContent, toc, metadata, sourceCode } = pageModule;
 
   const isPost = params.mdxPath?.[0] === 'posts';
+  const postSlug = isPost ? params.mdxPath?.[1] : undefined;
   const metadataRecord = metadata as Record<string, unknown>;
   const rawTag = metadataRecord.tag;
   const normalizedMetadata = isPost
@@ -206,6 +208,7 @@ const Page: FC<PageProps> = async (props) => {
 
   return (
     <Wrapper toc={toc} metadata={normalizedMetadata} sourceCode={sourceCode}>
+      {typeof postSlug === 'string' ? <PostViewTracker slug={postSlug} /> : null}
       <MDXContent {...props} params={params} />
     </Wrapper>
   );

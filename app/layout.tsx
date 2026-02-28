@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Footer, Layout, Navbar, ThemeSwitch } from 'nextra-theme-blog';
 import { Head } from 'nextra/components';
 import { getPageMap } from 'nextra/page-map';
@@ -58,6 +60,8 @@ export default async function RootLayout({
             </a>
           </Footer>
         </Layout>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
