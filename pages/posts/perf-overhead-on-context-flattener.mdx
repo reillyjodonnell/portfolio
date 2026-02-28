@@ -1,0 +1,194 @@
+---
+title: perf overhead on context flattener?
+date: 2025/8/13
+tag: react
+author: You
+---
+
+import Image from 'next/image';
+
+<div className="w-full h-full relative">
+  <Image
+    width={0}
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto' }}
+    src="https://cdn.hashnode.com/res/hashnode/image/upload/v1755117937736/2038d693-d71b-4c76-9994-583247dfa78f.jpeg"
+  />
+</div>
+
+Someone shared this image above. At first glance, I wasn’t sure about the perf implications — so let’s break it down from first principles :D
+
+## Let’s deconstruct this monster
+
+Here’s the code:
+
+```javascript
+// Function to flatten React Context Providers.
+const flattenContextProviders = (providers) => {
+  return providers.reduce(
+    (acc, Provider) => {
+      return ({ children }) => <Provider>{acc({ children })}</Provider>;
+    },
+    ({ children }) => <>{children}</>
+  );
+};
+
+// Array of Context Providers.
+const contextProviders = [
+  FirstContextProvider,
+  SecondContextProvider,
+  ThirdContextProvider,
+];
+
+// Flattened Context Provider.
+const FlattenedContextProvider = flattenContextProviders(contextProviders);
+
+// ⚠️ Really bad idea for performance!
+// It hides problem instead of solving it, and in really bad way.
+<FlattenedContextProvider>
+  <App />
+</FlattenedContextProvider>;
+```
+
+Off the top of my head I don’t know from intuition what flattenContextProviders becomes when called with the array so let’s construct it line by line:
+
+```javascript
+// looks like this the first call
+const flattenContextProviders = ([
+  FirstContextProvider,
+  SecondContextProvider,
+  ThirdContextProvider,
+]) => {
+  return providers.reduce(
+    (acc, Provider) => {
+      return ({ children }) => <Provider>{acc({ children })}</Provider>;
+    },
+    ({ children }) => <>{children}</>
+  );
+};
+
+/*
+     Here's every run for reduce
+
+     first run 
+     acc = ({children}) => <>{children}</>
+     Provider = FirstContextProvider
+     returns ({children}) => (
+        <FirstContextProvider>
+          {acc({ children })}}
+        </FirstContextProvider>
+
+     )
+     since our acc is ({children}) => <>{children}</>
+     which is a function that takes a parameter called children and returns 
+     the children enclosed in jsx fragments
+     
+     and here in this line:
+     {acc({ children })}}
+     we're just calling the above function with {children} as the argument
+
+     if that doesn't click we can work it out through substitution:
+     ({children}) => (
+        <FirstContextProvider>
+          {
+            // define a function, then CALL it immediately with { children }
+            (({ children }) => <>{children}</>)({ children })
+            // which becomes <>{children}</>
+           }
+        </FirstContextProvider>
+     )
+
+     all in the first pass we're returning
+     ({children}) => (
+        <FirstContextProvider>
+          <>{children}</>
+        </FirstContextProvider>
+     )
+
+    
+    */
+
+/*
+     second run
+     acc = the return from the first pass:
+        ({children}) => (
+            <FirstContextProvider>
+              <>{children}</>
+            </FirstContextProvider>
+         )
+     Provider = SecondContextProvider
+
+     returns ({children}) => (
+        <SecondContextProvider>
+          {acc({ children })}}
+        </SecondContextProvider>
+     )
+
+    remember accumulator is now an anonymous function wrapping FirstContextProvider
+
+    so the above becomes
+
+    returns ({children}) => (
+        <SecondContextProvider>
+          <FirstContextProvider>
+            {children}
+          </FirstContextProvider>
+        </SecondContextProvider>
+     )    
+
+    I think at this point you see the pattern. Once you get past that weird IIFE it's all good :D
+
+    so at the very end flattenedContext becomes this:
+
+     ({children}) => (
+       <ThirdContextProvider>
+        <SecondContextProvider>
+          <FirstContextProvider>
+            {children}
+          </FirstContextProvider>
+        </SecondContextProvider>
+      </ThirdContextProvider>
+     )    
+    */
+```
+
+##
+
+Perf implications
+
+quick recap —  
+we have this:
+
+```javascript
+const FlattenedContextProvider = ({ children }) => (
+  <ThirdContextProvider>
+    <SecondContextProvider>
+      <FirstContextProvider>{children}</FirstContextProvider>
+    </SecondContextProvider>
+  </ThirdContextProvider>
+);
+```
+
+which is an arrow function / function bound to a constant variable that returns a bunch of wrappers around children i.e. a **react component**.
+
+Same rules of react apply here: don’t define components inside other components. So as long as you don’t do that there are no performance implications compared to directly wrapping your app around the same providers in the exact same location.
+
+## Other implications
+
+What about in debugging? Does this wrapper hide the nested contexts under the name FlattenedContextProvider?
+
+### w/o wrapper
+
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1755128924338/45e20198-d00c-43d1-9c1e-31d9bb666579.png align="center")
+
+### and with it
+
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1755128968781/4a14a3f0-f050-424f-83c6-8fa699757a7c.png align="center")
+
+all it did was add an additional fiber “Anonymous” which we could rename via:  
+\`FlattenedContextProvider.displayName = "FlattenedContextProvider";\`
+
+## tldr;
+
+This sort of structure — compared to manually nesting the same providers — is purely a matter of taste. It has no observability drawbacks and, most importantly, no performance overhead. :D
