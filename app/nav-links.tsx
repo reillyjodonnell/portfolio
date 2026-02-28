@@ -11,11 +11,13 @@ const NAV_ITEMS = [
 
 export default function NavLinks() {
   const pathname = usePathname();
+  const currentPath = pathname ?? '/';
 
   return (
     <div className="x:flex x:items-center x:gap-2">
       {NAV_ITEMS.map(({ href, label }) => {
-        const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+        const isActive =
+          href === '/' ? currentPath === '/' : currentPath.startsWith(href);
 
         return (
           <Link

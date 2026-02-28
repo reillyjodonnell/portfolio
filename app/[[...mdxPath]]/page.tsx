@@ -1,4 +1,7 @@
 import { generateStaticParamsFor, importPage } from 'nextra/pages';
+import { access } from 'node:fs/promises';
+import path from 'node:path';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { FC } from 'react';
 import { useMDXComponents as getMDXComponents } from '../../mdx-components';
@@ -14,7 +17,45 @@ type PageProps = Readonly<{
 const isValidMdxPath = (mdxPath: string[] = []) =>
   mdxPath.every((segment) => /^[a-z0-9-]+$/i.test(segment));
 
-export async function generateMetadata(props: PageProps) {
+const siteUrl = 'https://reilly.dev';
+const fallbackImage = '/images/reilly.jpeg';
+const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+async function findExistingPublicImage(relativePathWithoutExt: string) {
+  for (const ext of imageExtensions) {
+    const relativePath = `${relativePathWithoutExt}.${ext}`;
+    const absolutePath = path.join(process.cwd(), 'public', relativePath);
+
+    try {
+      await access(absolutePath);
+      return `/${relativePath}`;
+    } catch {}
+  }
+
+  return null;
+}
+
+function extractFirstLocalImageFromSource(sourceCode: unknown) {
+  if (typeof sourceCode !== 'string') {
+    return null;
+  }
+
+  const mdxImageMatch = sourceCode.match(
+    /src=["']((?:\/images\/|https?:\/\/)[^"']+\.(?:png|jpe?g|webp|gif)(?:\?[^"']*)?)["']/i,
+  );
+
+  if (mdxImageMatch?.[1]) {
+    return mdxImageMatch[1];
+  }
+
+  const markdownImageMatch = sourceCode.match(
+    /!\[[^\]]*\]\(((?:\/images\/|https?:\/\/)[^)]+\.(?:png|jpe?g|webp|gif)(?:\?[^)]*)?)\)/i,
+  );
+
+  return markdownImageMatch?.[1] ?? null;
+}
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
 
   if (!isValidMdxPath(params.mdxPath)) {
@@ -22,8 +63,64 @@ export async function generateMetadata(props: PageProps) {
   }
 
   try {
-    const { metadata } = await importPage(params.mdxPath);
-    return metadata;
+    const { metadata, sourceCode } = await importPage(params.mdxPath);
+    const metadataRecord = metadata as Record<string, unknown>;
+    const mdxPath = params.mdxPath ?? [];
+    const isPost = mdxPath[0] === 'posts';
+
+    if (!isPost) {
+      return metadata as Metadata;
+    }
+
+    const slug = mdxPath[1];
+    const pathname = slug ? `/posts/${slug}` : '/posts';
+    const title =
+      typeof metadataRecord.title === 'string'
+        ? metadataRecord.title
+        : "Reilly's blog";
+    const description =
+      typeof metadataRecord.description === 'string'
+        ? metadataRecord.description
+        : 'Articles focus on React, React Native, TS, and Next.';
+
+    const frontmatterImage =
+      typeof metadataRecord.image === 'string'
+        ? metadataRecord.image.startsWith('http') ||
+          metadataRecord.image.startsWith('/')
+          ? metadataRecord.image
+          : `/${metadataRecord.image}`
+        : null;
+    const imageFromSource = extractFirstLocalImageFromSource(sourceCode);
+    const image =
+      frontmatterImage ??
+      imageFromSource ??
+      (await findExistingPublicImage(`images/${slug}/cover`)) ??
+      fallbackImage;
+
+    return {
+      ...(metadata as Metadata),
+      title,
+      description,
+      openGraph: {
+        type: 'article',
+        url: `${siteUrl}${pathname}`,
+        siteName: "Reilly's blog",
+        title,
+        description,
+        images: [image],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        creator: '@reillyjodonnell',
+        site: '@reillyjodonnell',
+        title,
+        description,
+        images: [image],
+      },
+      alternates: {
+        canonical: pathname,
+      },
+    };
   } catch {
     return {};
   }

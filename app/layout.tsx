@@ -8,11 +8,28 @@ import 'nextra-theme-blog/style.css';
 import '../styles/main.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://reilly.dev'),
   title: {
     default: "Reilly's blog",
     template: "%s | Reilly's blog",
   },
   description: 'Articles focus on React, React Native, TS, and Next.',
+  openGraph: {
+    type: 'website',
+    url: 'https://reilly.dev',
+    siteName: "Reilly's blog",
+    title: "Reilly's blog",
+    description: 'Articles focus on React, React Native, TS, and Next.',
+    images: ['/images/reilly.jpeg'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    creator: '@reillyjodonnell',
+    site: '@reillyjodonnell',
+    title: "Reilly's blog",
+    description: 'Articles focus on React, React Native, TS, and Next.',
+    images: ['/images/reilly.jpeg'],
+  },
 };
 
 export default async function RootLayout({
