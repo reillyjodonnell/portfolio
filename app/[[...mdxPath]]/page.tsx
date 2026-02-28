@@ -1,5 +1,5 @@
 import { generateStaticParamsFor, importPage } from 'nextra/pages';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -20,6 +20,14 @@ const isValidMdxPath = (mdxPath: string[] = []) =>
 const siteUrl = 'https://reilly.dev';
 const fallbackImage = '/images/reilly.jpeg';
 const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+function normalizeImagePath(value: string) {
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    return value;
+  }
+
+  return value.startsWith('/') ? value : `/${value}`;
+}
 
 async function findExistingPublicImage(relativePathWithoutExt: string) {
   for (const ext of imageExtensions) {
@@ -55,6 +63,42 @@ function extractFirstLocalImageFromSource(sourceCode: unknown) {
   return markdownImageMatch?.[1] ?? null;
 }
 
+async function getFrontmatterImageFromFile(mdxPath: string[]) {
+  const routePath = mdxPath.join('/');
+  const candidates = [
+    path.join(process.cwd(), 'content', `${routePath}.mdx`),
+    path.join(process.cwd(), 'content', `${routePath}.md`),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const content = await readFile(candidate, 'utf8');
+      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+
+      if (!frontmatterMatch?.[1]) {
+        continue;
+      }
+
+      const imageLineMatch = frontmatterMatch[1].match(/^image:\s*(.+)$/m);
+
+      if (!imageLineMatch?.[1]) {
+        continue;
+      }
+
+      const rawValue = imageLineMatch[1].trim();
+      const unquotedValue = rawValue.replace(/^['"]|['"]$/g, '');
+
+      if (!unquotedValue) {
+        continue;
+      }
+
+      return normalizeImagePath(unquotedValue);
+    } catch {}
+  }
+
+  return null;
+}
+
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const params = await props.params;
 
@@ -85,11 +129,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
     const frontmatterImage =
       typeof metadataRecord.image === 'string'
-        ? metadataRecord.image.startsWith('http') ||
-          metadataRecord.image.startsWith('/')
-          ? metadataRecord.image
-          : `/${metadataRecord.image}`
-        : null;
+        ? normalizeImagePath(metadataRecord.image)
+        : await getFrontmatterImageFromFile(mdxPath);
     const imageFromSource = extractFirstLocalImageFromSource(sourceCode);
     const image =
       frontmatterImage ??
