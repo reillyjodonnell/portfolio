@@ -4,6 +4,12 @@
 
 import withNextra from 'nextra';
 
+const nextraConfig = {
+  // optional: add `staticImage: true` to enable Nextra's auto image import
+};
+
+const nextra = withNextra(nextraConfig);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -16,10 +22,4 @@ const nextConfig = {
   },
 };
 
-export default withNextra({
-  theme: 'nextra-theme-blog',
-  themeConfig: './theme.config',
-
-  nextConfig,
-  // optional: add `unstable_staticImage: true` to enable Nextra's auto image import
-});
+export default nextra(nextConfig);

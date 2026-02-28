@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config '../tailwind.config.js';
+@import 'tailwindcss';
 
 @font-face {
   font-family: 'Inter var';
@@ -19,12 +18,30 @@
 }
 
 body {
-  font-family: 'Inter var', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  font-family:
+    'Inter var',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji';
   -webkit-font-smoothing: subpixel-antialiased;
-  font-feature-settings: 'case' 1, 'cpsp' 1, 'dlig' 1, 'cv01' 1, 'cv02',
-    'cv03' 1, 'cv04' 1;
+  font-feature-settings:
+    'case' 1,
+    'cpsp' 1,
+    'dlig' 1,
+    'cv01' 1,
+    'cv02',
+    'cv03' 1,
+    'cv04' 1;
   font-variation-settings: 'wght' 450;
   font-variant: common-ligatures contextual;
   letter-spacing: -0.02em;
@@ -67,6 +84,12 @@ img.next-image {
 
 .nav-line .nav-link {
   color: #69778c;
+}
+
+button.x\:print\:hidden.x\:underline {
+  width: max-content;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 pre.shaku {
@@ -235,15 +258,14 @@ pre.shaku.github-dark .shaku-underline-line {
   border-bottom: 2px solid rgb(9, 113, 239);
 }
 
-@media (prefers-color-scheme: dark) {
-  .shaku,
-  .shaku span:not([class^='shaku']) {
-    color: var(--shiki-dark) !important;
-    background-color: var(--shiki-dark-bg) !important;
-  }
-  .shaku .shaku-inline-highlight span {
-    background-color: transparent !important;
-  }
+html.dark .shaku,
+html.dark .shaku span:not([class^='shaku']) {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
+
+html.dark .shaku .shaku-inline-highlight span {
+  background-color: transparent !important;
 }
 
 .shaku-expand summary {
@@ -267,10 +289,6 @@ pre.shaku.github-dark .shaku-underline-line {
 
 /** twoslash **/
 pre {
-  /* In theory shiki will overwrite these, but this is to make sure there are defaults regardless */
-  background-color: white;
-  color: black;
-
   /* Give it some space to breathe */
   padding: 12px;
 
@@ -282,6 +300,18 @@ pre {
   /* Important to allow the code to move horizontally; */
   overflow-x: auto;
   position: relative;
+}
+
+pre.shiki,
+pre.shaku {
+  background-color: var(--shiki-light-bg, #ffffff);
+  color: var(--shiki-light, #111111);
+}
+
+html.dark pre.shiki,
+html.dark pre.shaku {
+  background-color: var(--shiki-dark-bg, #0d1117);
+  color: var(--shiki-dark, #e6edf3);
 }
 
 pre.shiki {
@@ -300,10 +330,8 @@ pre.shiki div.highlight {
   background-color: #e0eaf4;
 }
 
-@media (prefers-color-scheme: dark) {
-  pre.shiki div.highlight {
-    background-color: #414b55;
-  }
+html.dark pre.shiki div.highlight {
+  background-color: #414b55;
 }
 pre.shiki div.line {
   min-height: 1rem;
@@ -335,7 +363,13 @@ pre.twoslash data-lsp:hover::before {
   text-align: left;
   padding: 5px 8px;
   border-radius: 2px;
-  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, Courier New, monospace;
+  font-family:
+    'JetBrains Mono',
+    Menlo,
+    Monaco,
+    Consolas,
+    Courier New,
+    monospace;
   font-size: 14px;
   white-space: pre-wrap;
   z-index: 100;
@@ -374,7 +408,13 @@ pre .code-container:hover a {
 
 pre code {
   font-size: 12px;
-  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, Courier New, monospace;
+  font-family:
+    'JetBrains Mono',
+    Menlo,
+    Monaco,
+    Consolas,
+    Courier New,
+    monospace;
   white-space: pre;
   -webkit-overflow-scrolling: touch;
 }
@@ -488,11 +528,6 @@ pre .inline-completions ul.dropdown li span.result {
   color: black;
   display: inline-block;
 }
-.dark-theme .markdown pre {
-  background-color: #d8d8d8;
-  border-color: #ddd;
-  filter: invert(98%) hue-rotate(180deg);
-}
 data-lsp {
   /* Ensures there's no 1px jump when the hover happens */
   border-bottom: 1px dotted transparent;
@@ -513,7 +548,13 @@ data-lsp {
 }
 .tag-container .twoslash-annotation {
   position: absolute;
-  font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, Courier New, monospace;
+  font-family:
+    'JetBrains Mono',
+    Menlo,
+    Monaco,
+    Consolas,
+    Courier New,
+    monospace;
   right: -10px;
   /** Default annotation text to 200px */
   width: 200px;
@@ -578,12 +619,119 @@ pre .logger.log-log svg {
   display: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  .shiki.github-light {
-    display: none;
-  }
+html.dark .shiki.github-light {
+  display: none;
+}
 
-  .shiki.github-dark {
-    display: block;
-  }
+html.dark .shiki.github-dark {
+  display: block;
+}
+
+.nextra-tag {
+  background-color: transparent;
+  color: var(--x-color-gray-700);
+  border: 1px solid color-mix(in srgb, var(--x-color-gray-400) 35%, transparent);
+  box-shadow: none;
+  text-decoration: none;
+  font-weight: var(--x-font-weight-medium);
+}
+
+html.dark .nextra-tag {
+  color: var(--x-color-gray-300);
+  border-color: color-mix(in srgb, var(--x-color-gray-400) 40%, transparent);
+}
+
+.nextra-tag:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--x-color-gray-400) 12%,
+    transparent
+  );
+}
+
+html.dark .nextra-tag:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--x-color-gray-400) 18%,
+    transparent
+  );
+}
+
+article[data-pagefind-body] .socials-list {
+  margin: 0;
+}
+
+article[data-pagefind-body] .socials-list > p {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0.5rem 0;
+}
+
+article[data-pagefind-body] .socials-list > p span {
+  color: var(--color-text-sub);
+  min-width: 4.5rem;
+}
+
+article[data-pagefind-body] .mocha-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+article[data-pagefind-body] .mocha-logo {
+  height: 1.15em;
+  width: auto;
+  margin: 0;
+  border-radius: 3px;
+}
+
+html.dark article[data-pagefind-body] .mocha-logo {
+  filter: invert(1);
+}
+
+article[data-pagefind-body] .hover-preview {
+  display: inline-block;
+}
+
+article[data-pagefind-body] .hover-preview-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 30;
+  transition: opacity 0.15s ease;
+}
+
+article[data-pagefind-body] .hover-preview-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: color-mix(in srgb, var(--color-bg-main) 45%, black);
+}
+
+article[data-pagefind-body] .hover-preview-image {
+  position: relative;
+  width: min(820px, 90vw);
+  max-height: 84vh;
+  object-fit: contain;
+  border: 1px solid var(--color-line-3rd);
+  border-radius: 12px;
+  pointer-events: none;
+  transform: scale(0.98);
+  transition: transform 0.15s ease;
+  z-index: 31;
+  background-color: var(--color-bg-main);
+}
+
+article[data-pagefind-body] .hover-preview:hover .hover-preview-modal,
+article[data-pagefind-body] .hover-preview:focus-within .hover-preview-modal {
+  opacity: 1;
+}
+
+article[data-pagefind-body] .hover-preview:hover .hover-preview-image,
+article[data-pagefind-body] .hover-preview:focus-within .hover-preview-image {
+  transform: scale(1);
 }

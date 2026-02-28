@@ -10,26 +10,35 @@ async function generate() {
     feed_url: 'https://reilly.dev/feed.xml',
   });
 
-  const posts = await fs.readdir(path.join(__dirname, '..', 'pages', 'posts'));
+  const posts = await fs.readdir(
+    path.join(__dirname, '..', 'content', 'posts'),
+  );
 
   await Promise.all(
     posts.map(async (name) => {
       if (name.startsWith('index.')) return;
 
       const content = await fs.readFile(
-        path.join(__dirname, '..', 'pages', 'posts', name)
+        path.join(__dirname, '..', 'content', 'posts', name),
       );
       const frontmatter = matter(content);
+      const rawCategories = frontmatter.data.tags || frontmatter.data.tag || [];
+      const categories = Array.isArray(rawCategories)
+        ? rawCategories
+        : String(rawCategories)
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
 
       feed.item({
         title: frontmatter.data.title,
         url: '/posts/' + name.replace(/\.mdx?/, ''),
         date: frontmatter.data.date,
         description: frontmatter.data.description,
-        categories: frontmatter.data.tag.split(', '),
+        categories,
         author: frontmatter.data.author,
       });
-    })
+    }),
   );
 
   await fs.writeFile('./public/feed.xml', feed.xml({ indent: true }));

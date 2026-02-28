@@ -18,7 +18,7 @@ Hope you learn something new!
 
 ## Start
 
-Begin with \`bun init\` to start a new project. Bun comes with TS & JSX baked in (literally has a transpiler step in the code that converts ts / JSX to js - \[lexer is here if interested\]([https://github.com/oven-sh/bun/blob/main/src/js_lexer.zig](https://github.com/oven-sh/bun/blob/main/src/js_lexer.zig)) which means we don’t have to worry about that.
+Begin with `bun init` to start a new project. Bun comes with TS & JSX baked in (literally has a transpiler step in the code that converts ts / JSX to js - [lexer is here if interested](https://github.com/oven-sh/bun/blob/main/src/js_lexer.zig)) which means we don’t have to worry about that.
 
 Ok the first step with ANY problem is that we need to understand the problem and have a starting mental model of HOW the problem works.
 
@@ -34,7 +34,7 @@ an http server!
 
 ## HTTP server
 
-Bun has it’s own syntax for an http server \[here\]([https://bun.sh/docs/api/http](https://bun.sh/docs/api/http))
+Bun has it’s own syntax for an http server [here](https://bun.sh/docs/api/http)
 
 With this:
 
@@ -224,7 +224,7 @@ The gist of what the script needs to do is -
 1. target some html node
 2. pass that node into `hydrateRoot` as well as the react node we want to render (Hello/ Bye) - we’ll need to import
 
-\[here’s how it’s done in the docs\] ([https://react.dev/reference/react-dom/client/hydrateRoot#:~:text=import%20%7B%20hydrateRoot,reactNode)%3B](<https://react.dev/reference/react-dom/client/hydrateRoot#:~:text=import%20%7B%20hydrateRoot,reactNode)%3B>))
+[here’s how it’s done in the docs](https://react.dev/reference/react-dom/client/hydrateRoot#:~:text=import%20%7B%20hydrateRoot,reactNode)%3B)
 
 ```javascript
 import { hydrateRoot } from 'react-dom/client';
@@ -258,7 +258,7 @@ new Response(
 
 This doesn’t work though!
 
-To understand let’s go look at what `renderToReadableStream` \[here\]([https://react.dev/reference/react-dom/server/renderToReadableStream#parameters](https://react.dev/reference/react-dom/server/renderToReadableStream#parameters))
+To understand let’s go look at what `renderToReadableStream` [here](https://react.dev/reference/react-dom/server/renderToReadableStream#parameters)
 
 The first parameter is:
 
@@ -330,7 +330,7 @@ We get a 404 for main.js!
 
 The request that comes in for /main.js looks something like `localhost:3000/main.js` since there’s not a route covered / we’re not handling a fallback it automatically returns a 404.
 
-Also remember earlier when we talked about renderToString (which is blocking in that the response isn’t send until the entire react tree is rendered and turned into a string?) and it’s alt the renderToReadableStream? There’s the two same ideas for reading a file and returning it’s contents for http servers. Thankfully Bun makes it REALLY easy to stream a file. \[docs here\]([https://bun.sh/docs/api/http#streaming-files](https://bun.sh/docs/api/http#streaming-files))
+Also remember earlier when we talked about renderToString (which is blocking in that the response isn’t send until the entire react tree is rendered and turned into a string?) and it’s alt the renderToReadableStream? There’s the two same ideas for reading a file and returning it’s contents for http servers. Thankfully Bun makes it REALLY easy to stream a file. [docs here](https://bun.sh/docs/api/http#streaming-files)
 
 Their example is
 

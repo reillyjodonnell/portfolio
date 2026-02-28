@@ -1,0 +1,53 @@
+---
+type: page
+title: bookmarks
+---
+
+import BookmarksVariations from '../../components/bookmarks-variations';
+
+export const bookmarks = [
+	{
+		section: 'Designing Software',
+		links: [
+			{
+				title: 'Tiger Style',
+				href: 'https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md',
+			},
+		],
+	},
+	{
+		section: 'Distributed Systems',
+		links: [
+			{
+				title: 'Scalability! But at what COST?',
+				href: 'https://www.usenix.org/system/files/conference/hotos15/hotos15-paper-mcsherry.pdf',
+			},
+			{
+				title: 'Calvin: Fast Distributed Transactions for Partitioned DBs',
+				href: 'https://cs.yale.edu/homes/thomson/publications/calvin-sigmod12.pdf',
+			},
+		],
+	},
+	{
+		section: 'Zig',
+		links: [
+			{
+				title: 'Bonkers compile-time in Zig',
+				href: 'https://www.scottredig.com/blog/bonkers_comptime/',
+			},
+		],
+	},
+	{
+		section: 'Art',
+		links: [
+			{
+				title: 'Sunlight — Chloe Yan',
+				href: 'https://www.chloeyan.me/digital-spaces/sunlight',
+			},
+		],
+	},
+];
+
+Small collection of links I come back to.
+
+<BookmarksVariations bookmarks={bookmarks} />

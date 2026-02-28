@@ -28,7 +28,7 @@ In response to the issues of cold starts, CF introduced Workers. Workers are **v
 
 ## wait — v8 iso-whats?
 
-v8 — yeah that [one](<[https://v8.dev/](https://v8.dev/)>) is an individual in-process js/wasm sandbox running in a single OS process. V8 isolates _logically_ isolate their JavaScript heaps (variables, objects, etc.), meaning **one isolate cannot directly access another’s memory**. However, they run in the **same OS process**, sharing the _same virtual memory space_. Most importantly, they spin up fast (Cloudflare reported an avg speed of [5ms](<[https://blog.cloudflare.com/cloud-computing-without-containers/#:~:text=Because%20Workers%20don%E2%80%99t%20have%20to%20start%20a%20process%2C%20Isolates%20start%20in%205%20milliseconds%2C%20a%20duration%20which%20is%20imperceptible](https://blog.cloudflare.com/cloud-computing-without-containers/#:~:text=Because%20Workers%20don%E2%80%99t%20have%20to%20start%20a%20process%2C%20Isolates%20start%20in%205%20milliseconds%2C%20a%20duration%20which%20is%20imperceptible)>)
+v8 — yeah that [one](https://v8.dev/) is an individual in-process js/wasm sandbox running in a single OS process. V8 isolates _logically_ isolate their JavaScript heaps (variables, objects, etc.), meaning **one isolate cannot directly access another’s memory**. However, they run in the **same OS process**, sharing the _same virtual memory space_. Most importantly, they spin up fast (Cloudflare reported an avg speed of [5ms](https://blog.cloudflare.com/cloud-computing-without-containers/#:~:text=Because%20Workers%20don%E2%80%99t%20have%20to%20start%20a%20process%2C%20Isolates%20start%20in%205%20milliseconds%2C%20a%20duration%20which%20is%20imperceptible))
 
 ## what’s the catch?
 

@@ -45,7 +45,7 @@ Head over to [https://railway.app/new](https://railway.app/new) and select "Prov
 
 Once the database is provisioned (it'll show the date created in the node box) click on it and go over to the "Connect" tab.
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673231139340/205f444b-bc08-4c3a-b1b8-da46ae879997.png align="center")
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673231139340/205f444b-bc08-4c3a-b1b8-da46ae879997.png)
 
 From there copy the Postgres Connection URL and paste it into the .env file for the value for the DATABASE_URL key.
 
@@ -222,7 +222,7 @@ yarn prisma studio
 
 Go to the URL specified and you should see this
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673134928724/c336f8ed-fdb6-4dcc-8888-c7dd18c6fc97.png align="center")
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673134928724/c336f8ed-fdb6-4dcc-8888-c7dd18c6fc97.png)
 
 ### Export the Prisma Client
 
@@ -496,7 +496,7 @@ yarn dev
 
 Now visit http://localhost:3000/api/graphql to begin the Apollo Server playground - it should look like this!
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673155160223/e1eb6ce1-7784-4f8d-b04f-993b96bb80d6.png align="center")
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673155160223/e1eb6ce1-7784-4f8d-b04f-993b96bb80d6.png)
 
 Now if you remove that id with the red squiggly line and type ctrl+space (Windows) / command+space (mac) you'll see the one type we've defined on our Query type. Select that and it will autocomplete the query with the required arguments!
 
@@ -514,7 +514,7 @@ Remove all the code and type `mutation {}` and inside of the curly braces type c
 
 Be sure your variables match the the names in the arguments. It should look like this:
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673156168034/91caf47d-9c77-4553-ae19-7636d1d4133c.png align="center")
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673156168034/91caf47d-9c77-4553-ae19-7636d1d4133c.png)
 
 Now let's check our database and see the new user via Prisma studio!
 
@@ -524,7 +524,7 @@ yarn prisma studio
 
 If everything worked it should be there in the User table!
 
-![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673156282364/97a25043-946a-4dbf-ae6a-80a6f5c49464.png align="center")
+![](https://cdn.hashnode.com/res/hashnode/image/upload/v1673156282364/97a25043-946a-4dbf-ae6a-80a6f5c49464.png)
 
 **Defining Our Second Custom Object Type - Post**
 
