@@ -1,0 +1,84 @@
+---
+title: Pointers in Zig
+date: 2026/3/13
+tag: zig, systems
+author: You
+---
+
+<details>
+
+<summary>Refresher on variables</summary>
+
+A variable stores a value.
+
+For example:
+
+```zig
+var a: usize = 1;
+const b = a;
+a = 2;
+```
+
+just like in js:
+
+```js
+a == 2;
+b == 1;
+```
+
+But imagine we had this use case: we want `b` to always stay in sync with `a`.
+That is, we want to refer to `a` itself rather than `a`'s value.
+
+We _could_ manually update `b` every time we update `a`.
+
+But what if, instead of copying `a`'s value, **we could have `b` reference `a` directly?**
+
+That's what pointers let us do!
+
+</details>
+
+> A pointer is a value that stores an address.
+
+Zig is statically typed, a pointer’s type also describes what it points to (pointee).
+
+Here's a more concrete example of creating a pointer.
+
+```zig
+var a: usize = 2;
+const b = &a; // b is *usize (a pointer to an unsigned integer type)
+```
+
+2 obvious things:
+
+1. the variable `a` is mutable bc `var`
+2. the variable `b` is immutable, so `b` will forever store the address of `a`.
+
+So we can change `a`'s value, but we can't change `b`'s. But there is a way to change `a` through the pointer `b`
+
+Wait, how?
+
+We can access and mutate the value at the address the pointer stores by dereferencing it with `.*`.
+
+```zig
+var a: usize = 2;
+const b = &a;
+b.* = 3;
+```
+
+You might be thinking: "but if `b.* = 3`, doesn't that mean b changed?"
+
+The reason it doesn't is because `b` still stores the same address: the address of `a`.
+
+What changed was the value stored at that address.
+
+In other words, `b` points to `a`’s storage location, not to the number 2 or 3.
+
+Now here's the same example, but let's make `a` immutable:
+
+```zig
+const a: usize = 2;
+const b = &a;
+b.* = 3; //error: cannot assign to constant
+```
+
+This fails because `b` is now pointing to immutable data.

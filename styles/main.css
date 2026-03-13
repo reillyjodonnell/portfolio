@@ -71,7 +71,23 @@ h2 {
 }
 
 details summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  font-size: 1em;
+  line-height: 1.4;
   cursor: pointer;
+}
+
+details summary::-webkit-details-marker,
+details summary::marker {
+  display: none;
+}
+
+details summary h3 {
+  margin: 0;
 }
 
 img.next-image {

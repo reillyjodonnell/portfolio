@@ -1,0 +1,19 @@
+To start we have to understand why threads exist in the first place.
+
+First a few fundamentals:
+
+- CPUs execute instructions via the Program Counter one at a time
+- One instruction can execute per core.
+- at least 2 cores means parallel execution is possible
+
+Concretely, we have insanely powerful machines that have multiple cored cpus.
+
+Imagine if we had to interface with this hardware from scratch -
+
+there would quite literally be near infinite problems to solve and would require so much upfront work to make the hardware work - e.g. handling what we do on the cpu and when. It has a crazy high ceiling for efficiency at the cost of insane complexity. (turns out abstractions are a really good thing)
+
+Let's say we want to capture the input of a keyboard and display to the screen - we have a loop waiting for input from the keyboard hardware, it comes and now we send it off to the screen hardware to display but can't do anything until we get the response back (turns out hardware is slow compared to cpu)
+
+Another keyboard comes in - but we're blocked - still waiting for the hardware input. Ok it finally comes in - we process that previous and now we have 4 more keyboards that are behind. This escalates quickly. Which is exactly why we moved from single core cpu's very quickly.
+
+## The problem with shared memory
