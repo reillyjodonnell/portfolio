@@ -1,0 +1,176 @@
+---
+title: Spot the subtle Zig bug
+tag: zig
+author: You
+date: 2026/3/14
+---
+
+import Image from 'next/image';
+
+<div className="w-[50%] h-[50%] relative">
+  <Image
+    width={0}
+    unoptimized
+    height={0}
+    sizes="100vw"
+    style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+
+    src="/images/spot-subtle-zig-bug-1/pexels.jpg"
+
+/>
+
+</div>
+
+There's an issue here in this code.
+
+It's outputting `Item id: 99` 100 times in the console.
+
+```zig
+const std = @import("std");
+
+const Item = struct { id: usize };
+
+pub fn main() !void {
+    var gpa: std.heap.DebugAllocator(.{}) = .init;
+    const allocator = gpa.allocator();
+
+    var list = try std.ArrayList(*Item).initCapacity(allocator, 100);
+    defer list.deinit(allocator);
+
+    for (0..100) |value| {
+        var item: Item = .{ .id = value };
+        list.insertAssumeCapacity(value, &item);
+    }
+
+    for (list.items) |item| {
+        std.debug.print("Item id: {d}\n", .{item.*.id});
+    }
+}
+```
+
+hint its related to pointer lifetime.
+
+Think on this..
+
+..
+
+..
+
+..
+
+..
+
+..
+
+..
+
+The problem is that each loop iteration creates a new local `item`
+Pointing to something that no longer exists / goes out of scope is called a **dangling pointer**.
+
+To remedy, we need each `item` to somehow outlive the scope of each loop iteration.
+
+We have 2 fixes depending on if we really need a pointer to Item.
+
+If we **don't** the fix is easy - just pass item to array list instead of the pointer.
+
+```zig
+const std = @import("std");
+
+const Item = struct { id: usize };
+
+pub fn main() !void {
+    var gpa: std.heap.DebugAllocator(.{}) = .init;
+    defer std.debug.assert(gpa.deinit() == .ok);
+    const allocator = gpa.allocator();
+
+    var list = try std.ArrayList(Item).initCapacity(allocator, 100);
+    defer list.deinit(allocator);
+
+    for (0..100) |value| {
+        const item: Item = .{ .id = value };
+        list.insertAssumeCapacity(value, item);
+    }
+
+    for (list.items) |item| {
+        std.debug.print("Item id: {d}\n", .{item.id});
+    }
+}
+```
+
+<details>
+
+<summary>confused on why this works?</summary>
+
+Similar to the example with the dangling pointer, we still declare `item` within the lifecycle of the loop iteration,
+but then list gets it's own copy. To be totally transparent: the local variable, `item`, still goes out of scope,
+but now since the array holds it's own independent
+copy, it's safe to use later.
+
+The mental model is roughly:
+
+- we declare a runtime value that is of type `Item` stored in a variable, `item`.
+- `list` stores the value of item in the respected slot in the contiguous block of memory it's reserved (arrays are contiguous)
+
+</details>
+
+If we **do** need the pointer, the fix is straightforward
+
+```zig
+const std = @import("std");
+
+const Item = struct { id: usize };
+
+pub fn main() !void {
+    var gpa: std.heap.DebugAllocator(.{}) = .init;
+    defer std.debug.assert(gpa.deinit() == .ok);
+    const allocator = gpa.allocator();
+
+    var list = try std.ArrayList(*Item).initCapacity(allocator, 100);
+    defer list.deinit(allocator);
+
+    for (0..100) |value| {
+        const item = try allocator.create(Item);
+        item.* = .{ .id = value };
+        // item is a pointer so we don't need to do &item here
+        list.insertAssumeCapacity(value, item);
+    }
+
+    for (list.items) |item| {
+        std.debug.print("Item id: {d}\n", .{item.*.id});
+    }
+}
+```
+
+Oops. Don't forget to free the items too!
+
+```zig
+const std = @import("std");
+
+const Item = struct { id: usize };
+
+pub fn main() !void {
+    var gpa: std.heap.DebugAllocator(.{}) = .init;
+    defer std.debug.assert(gpa.deinit() == .ok);
+    const allocator = gpa.allocator();
+
+    var list = try std.ArrayList(*Item).initCapacity(allocator, 100);
+
+    defer {
+        for (list.items) |item| {
+            allocator.destroy(item);
+        }
+        list.deinit(allocator);
+    }
+
+    for (0..100) |value| {
+        const item = try allocator.create(Item);
+        item.* = .{ .id = value };
+        list.insertAssumeCapacity(value, item);
+    }
+
+    for (list.items) |item| {
+        std.debug.print("Item id: {d}\n", .{item.*.id});
+    }
+}
+
+```
