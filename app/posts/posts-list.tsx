@@ -1,7 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
+
+const pillStyle = (active: boolean, hovered = false): CSSProperties => ({
+  border: '1px solid transparent',
+  borderRadius: '.5rem',
+  padding: '.25rem .6rem',
+  fontSize: '.82rem',
+  fontWeight: active ? 600 : 400,
+  opacity: active ? 1 : 0.7,
+  color: 'inherit',
+  background: active
+    ? 'color-mix(in srgb, var(--x-color-gray-400) 18%, transparent)'
+    : hovered
+      ? 'color-mix(in srgb, var(--x-color-gray-400) 10%, transparent)'
+      : 'transparent',
+  cursor: 'pointer',
+  transition: 'background 150ms ease',
+});
 
 type PostItem = {
   route: string;
@@ -19,6 +36,7 @@ export default function PostsList({ posts }: PostsListProps) {
   const [query, setQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [showAllTags, setShowAllTags] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
   const isAllActive = selectedTag === '';
 
   const tags = useMemo(
@@ -96,21 +114,9 @@ export default function PostsList({ posts }: PostsListProps) {
         <button
           type="button"
           onClick={() => setSelectedTag('')}
-          style={{
-            border: isAllActive
-              ? '1px solid var(--x-color-gray-600)'
-              : '1px solid transparent',
-            borderRadius: '.5rem',
-            padding: '.25rem .6rem',
-            fontSize: '.82rem',
-            opacity: isAllActive ? 1 : 0.88,
-            fontWeight: isAllActive ? 600 : 400,
-            color: 'inherit',
-            background: isAllActive
-              ? 'color-mix(in srgb, var(--x-color-gray-400) 18%, transparent)'
-              : 'transparent',
-            cursor: 'pointer',
-          }}
+          onMouseEnter={() => setHovered('all')}
+          onMouseLeave={() => setHovered(null)}
+          style={pillStyle(isAllActive, hovered === 'all')}
         >
           All
         </button>
@@ -120,23 +126,9 @@ export default function PostsList({ posts }: PostsListProps) {
             key={tag}
             type="button"
             onClick={() => setSelectedTag((prev) => (prev === tag ? '' : tag))}
-            style={{
-              border:
-                selectedTag === tag
-                  ? '1px solid var(--x-color-gray-600)'
-                  : '1px solid transparent',
-              borderRadius: '.5rem',
-              padding: '.25rem .6rem',
-              fontSize: '.82rem',
-              opacity: selectedTag && selectedTag !== tag ? 0.72 : 1,
-              fontWeight: selectedTag === tag ? 600 : 400,
-              background:
-                selectedTag === tag
-                  ? 'color-mix(in srgb, var(--x-color-gray-400) 18%, transparent)'
-                  : 'transparent',
-              color: 'inherit',
-              cursor: 'pointer',
-            }}
+            onMouseEnter={() => setHovered(tag)}
+            onMouseLeave={() => setHovered(null)}
+            style={pillStyle(selectedTag === tag, hovered === tag)}
           >
             {tag}
           </button>
@@ -146,16 +138,10 @@ export default function PostsList({ posts }: PostsListProps) {
           <button
             type="button"
             onClick={() => setShowAllTags((prev) => !prev)}
+            onMouseEnter={() => setHovered('more')}
+            onMouseLeave={() => setHovered(null)}
             style={{
-              border: '1px solid transparent',
-              borderRadius: '.5rem',
-              padding: '.25rem .35rem',
-              fontSize: '.82rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              opacity: 0.72,
-              color: 'inherit',
-              background: 'transparent',
+              ...pillStyle(false, hovered === 'more'),
               textDecoration: 'underline',
               textUnderlineOffset: '2px',
             }}

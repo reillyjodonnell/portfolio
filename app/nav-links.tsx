@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, type CSSProperties } from 'react';
 
 const NAV_ITEMS = [
   { href: '/', label: 'about' },
@@ -9,9 +10,27 @@ const NAV_ITEMS = [
   { href: '/bookmarks', label: 'bookmarks' },
 ] as const;
 
+const linkStyle = (active: boolean, hovered = false): CSSProperties => ({
+  border: '1px solid transparent',
+  borderRadius: '.5rem',
+  padding: '.2rem .55rem',
+  fontSize: '.92rem',
+  fontWeight: active ? 600 : 400,
+  opacity: active ? 1 : 0.88,
+  color: 'inherit',
+  background: active
+    ? 'color-mix(in srgb, var(--x-color-gray-400) 18%, transparent)'
+    : hovered
+      ? 'color-mix(in srgb, var(--x-color-gray-400) 10%, transparent)'
+      : 'transparent',
+  textDecoration: 'none',
+  transition: 'background 150ms ease',
+});
+
 export default function NavLinks() {
   const pathname = usePathname();
   const currentPath = pathname ?? '/';
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
     <div className="x:flex x:items-center x:gap-2">
@@ -24,21 +43,9 @@ export default function NavLinks() {
             key={href}
             href={href}
             aria-current={isActive ? 'page' : undefined}
-            style={{
-              border: isActive
-                ? '1px solid var(--x-color-gray-600)'
-                : '1px solid transparent',
-              borderRadius: '.5rem',
-              padding: '.2rem .55rem',
-              fontSize: '.92rem',
-              opacity: isActive ? 1 : 0.88,
-              fontWeight: isActive ? 600 : 400,
-              color: 'inherit',
-              background: isActive
-                ? 'color-mix(in srgb, var(--x-color-gray-400) 18%, transparent)'
-                : 'transparent',
-              textDecoration: 'none',
-            }}
+            onMouseEnter={() => setHovered(href)}
+            onMouseLeave={() => setHovered(null)}
+            style={linkStyle(isActive, hovered === href)}
           >
             {label}
           </Link>
